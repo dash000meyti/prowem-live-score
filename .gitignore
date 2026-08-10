@@ -1,40 +1,10 @@
-# Environment
-.env
-.env.*
-!.env.example
+# Repository-level IDE / workspace files
 
-# Dependencies
-/vendor/
-/node_modules/
-
-# IDE / Editors
 /.idea/
 /.vscode/
 /.cursor/
-/.zed/
-/.nova/
 
-# OS files
+# Operating system files
+
 .DS_Store
 Thumbs.db
-
-# Laravel runtime
-/public/build/
-/public/hot
-/public/storage
-/storage/*.key
-/storage/pail
-
-# PHPUnit / tooling
-.phpunit.result.cache
-.phpunit.cache/
-.phpactor.json
-auth.json
-_ide_helper.php
-
-# Logs
-*.log
-
-# Legacy local environments
-Homestead.json
-Homestead.yaml
