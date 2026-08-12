@@ -7,10 +7,14 @@ Laravel 13 / PHP 8.3 API for event readiness, operational incidents, PROWEM tech
 ```bash
 cp .env.example .env
 docker compose build
-docker compose up -d
+docker compose up -d postgres redis app
 docker compose exec app php artisan key:generate
-docker compose exec app php artisan migrate:fresh --seed
+docker compose up -d
+docker compose exec app php artisan migrate:fresh --seed --force
+docker compose ps
 ```
+
+> `migrate:fresh` deletes and recreates every table in the local Event Care database. Use this command only when resetting local/demo data.
 
 - API: `http://127.0.0.1:18090/api/v1`
 - Health: `http://127.0.0.1:18090/api/v1/health`
@@ -28,6 +32,7 @@ All seeded users use password `password`:
 - `support@prowem.test`
 - `lead@prowem.test`
 - `admin@prowem.test`
+- `other-organizer@prowem.test` (separate customer for authorization/isolation testing)
 
 The deterministic seed creates seven primary mobile scenarios plus a second-customer isolation scenario. See [docs/demo-data.md](docs/demo-data.md) for stable references, fresh-seed IDs, expected UI states, and pagination datasets.
 
