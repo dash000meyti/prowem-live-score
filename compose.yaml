@@ -1,3 +1,5 @@
+name: event-care-api
+
 services:
     app:
         build:
