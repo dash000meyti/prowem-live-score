@@ -20,6 +20,7 @@ class OperationDocumentationTransformer implements DocumentTransformer
         'GET /me' => ['Get current user', 'Return the authenticated user and customer context.'],
         'GET /events' => ['List organizer events', 'Return the events visible to the authenticated user as paginated mobile cards.'],
         'GET /events/{event}/care' => ['Get Event Care overview', 'Return the bounded aggregate used by the Event Care mobile home.'],
+        'GET /events/{event}/lookups' => ['Get event form lookups', 'Return venues, fixtures, and support staff used by incident and ticket forms. Staff is included only for support roles.'],
         'GET /events/{event}/readiness' => ['Get event readiness', 'Return derived readiness status, score, blockers, and dimensions.'],
         'GET /events/{event}/readiness/{dimension}' => ['Get readiness dimension detail', 'Explain the checks and actions behind one supported readiness dimension.'],
         'GET /events/{event}/teams/readiness' => ['List team readiness', 'Filter and paginate derived team readiness cards.'],

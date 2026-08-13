@@ -1,45 +1,28 @@
 "use client";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiSend } from "@/shared/api/browser";
-import type { EventStatus, LiveControl } from "@/shared/api/types";
-import { useSession } from "@/shared/auth/session-context";
-import { canManage } from "@/shared/auth/roles";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { apiGet } from "@/shared/api/browser";
+import { useEventLookups } from "@/shared/api/lookups";
+import type { EventLookups, LiveControl } from "@/shared/api/types";
 import { useEventRealtime } from "@/shared/realtime/hooks";
+import { fixtureLabel } from "@/shared/lib/labels";
 import { Badge } from "@/shared/ui/badge";
-import { Button } from "@/shared/ui/button";
 import { Card, CardTitle } from "@/shared/ui/card";
 import { ErrorBanner } from "@/shared/ui/error-banner";
-import { useState } from "react";
-
-const transitions: Record<string, EventStatus[]> = {
-  preparing: ["ready", "cancelled"],
-  ready: ["preparing", "live", "cancelled"],
-  live: ["completed", "cancelled"],
-  completed: [],
-  cancelled: [],
-};
+import { PageHeader } from "@/shared/ui/page-header";
+import { EventStatusActions } from "@/features/events/status-actions";
 
 export function LiveControlPage() {
   const params = useParams<{ eventId: string }>();
-  const user = useSession();
-  const queryClient = useQueryClient();
   const [error, setError] = useState<unknown>(null);
+  const lookups = useEventLookups(params.eventId);
   useEventRealtime(params.eventId);
   const query = useQuery({
     queryKey: ["event", params.eventId, "live"],
     queryFn: () => apiGet<LiveControl>(`/events/${params.eventId}/live`),
-  });
-
-  const transition = useMutation({
-    mutationFn: (status: EventStatus) =>
-      apiSend(`/events/${params.eventId}/status`, "PATCH", { status }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["event", params.eventId] });
-      setError(null);
-    },
-    onError: setError,
   });
 
   if (query.isError) {
@@ -52,41 +35,48 @@ export function LiveControlPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <h1 className="font-display text-3xl font-bold uppercase">Live control</h1>
-          <Badge value={data.event.status} />
+      <PageHeader
+        eyebrow="Match day"
+        title="Live control"
+        description={`${data.progress.completed}/${data.progress.total} matches complete`}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge value={data.event.status} />
+            <EventStatusActions
+              eventId={params.eventId}
+              status={data.event.status}
+              onError={setError}
+            />
+          </div>
+        }
+      />
+      <ErrorBanner error={error} />
+      <Card>
+        <CardTitle>System status</CardTitle>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge value={data.system_status.status} />
           <span className="text-sm text-prowem-muted">
-            {data.progress.completed}/{data.progress.total} matches complete
+            Score {data.system_status.score} · {data.system_status.critical_blockers_count}{" "}
+            critical blockers · {data.system_status.actions_required_count} actions
           </span>
         </div>
-        {canManage(user.role) ? (
-          <div className="flex gap-2">
-            {transitions[data.event.status].map((status) => (
-              <Button
-                key={status}
-                type="button"
-                variant={status === "live" ? "primary" : "secondary"}
-                onClick={() => transition.mutate(status)}
-              >
-                {status === "live" ? "Start event" : status}
-              </Button>
-            ))}
-          </div>
-        ) : null}
-      </div>
-      <ErrorBanner error={error} />
+      </Card>
       <div className="grid gap-4 md:grid-cols-3">
-        <MatchList title="Live" matches={data.live_matches} />
-        <MatchList title="Next" matches={data.next_matches} />
-        <MatchList title="Delayed" matches={data.delayed_matches} />
+        <MatchList title="Live" matches={data.live_matches} lookups={lookups.data} />
+        <MatchList title="Next" matches={data.next_matches} lookups={lookups.data} />
+        <MatchList title="Delayed" matches={data.delayed_matches} lookups={lookups.data} />
       </div>
       <Card>
         <CardTitle>Operational incidents</CardTitle>
         <ul className="space-y-2 text-sm">
           {data.operational_incidents.map((incident) => (
             <li key={incident.id}>
-              <Badge value={incident.severity} /> {incident.title}
+              <Link
+                className="text-prowem-coral hover:underline"
+                href={`/events/${params.eventId}/incidents/${incident.id}`}
+              >
+                <Badge value={incident.severity} /> {incident.title}
+              </Link>
             </li>
           ))}
           {data.operational_incidents.length === 0 ? (
@@ -101,20 +91,25 @@ export function LiveControlPage() {
 function MatchList({
   title,
   matches,
+  lookups,
 }: {
   title: string;
   matches: LiveControl["live_matches"];
+  lookups?: EventLookups;
 }) {
   return (
     <Card>
       <CardTitle>{title}</CardTitle>
       <ul className="space-y-2 text-sm">
-        {matches.map((match) => (
-          <li key={match.id}>
-            #{match.number} · {match.status}
-            {match.delay_minutes ? ` · +${match.delay_minutes}m` : ""}
-          </li>
-        ))}
+        {matches.map((match) => {
+          const named = lookups?.fixtures.find((fixture) => fixture.id === match.id);
+          return (
+            <li key={match.id}>
+              {named ? fixtureLabel(named) : `#${match.number}`} · {match.status}
+              {match.delay_minutes ? ` · +${match.delay_minutes}m` : ""}
+            </li>
+          );
+        })}
         {matches.length === 0 ? <li className="text-prowem-muted">None.</li> : null}
       </ul>
     </Card>

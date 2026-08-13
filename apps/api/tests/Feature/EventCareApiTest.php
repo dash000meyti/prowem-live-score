@@ -77,6 +77,21 @@ class EventCareApiTest extends TestCase
         $this->getJson("/api/v1/events/{$event->id}/care-report")->assertOk()->assertJsonStructure(['success', 'message', 'data' => ['team_count', 'match_count', 'incidents', 'support', 'recommendations']]);
     }
 
+    public function test_event_lookups_include_fixtures_and_hide_staff_from_organizer(): void
+    {
+        $event = Event::query()->where('external_reference', 'VSC-2026')->firstOrFail();
+        $this->actingAs($this->organizer())->getJson("/api/v1/events/{$event->id}/lookups")
+            ->assertOk()
+            ->assertJsonStructure(['success', 'data' => ['venues', 'fixtures' => [['id', 'number', 'kickoff_at', 'home_team', 'away_team']], 'staff']])
+            ->assertJsonPath('data.staff', []);
+        $this->actingAs(User::query()->where('email', 'support@prowem.test')->firstOrFail())
+            ->getJson("/api/v1/events/{$event->id}/lookups")
+            ->assertOk()
+            ->assertJsonCount(3, 'data.staff');
+        $private = Event::query()->where('external_reference', 'PRIVATE-2026')->firstOrFail();
+        $this->actingAs($this->organizer())->getJson("/api/v1/events/{$private->id}/lookups")->assertForbidden()->assertJsonPath('error.code', 'FORBIDDEN');
+    }
+
     public function test_validation_and_not_found_contracts(): void
     {
         $this->actingAs($this->organizer());

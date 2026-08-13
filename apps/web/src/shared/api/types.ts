@@ -310,3 +310,23 @@ export type Paginated<T> = {
     next: string | null;
   };
 };
+
+export type LookupTeam = { id: number; name: string };
+
+export type LookupFixture = {
+  id: number;
+  number: number;
+  kickoff_at: string;
+  status: string;
+  venue_id: number | null;
+  home_team: LookupTeam | null;
+  away_team: LookupTeam | null;
+};
+
+export type LookupStaff = { id: number; name: string; role: UserRole };
+
+export type EventLookups = {
+  venues: { id: number; name: string }[];
+  fixtures: LookupFixture[];
+  staff: LookupStaff[];
+};

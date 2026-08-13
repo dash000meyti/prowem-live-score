@@ -89,7 +89,7 @@ class OpenApiTest extends TestCase
     public function test_openapi_primary_operations_have_summaries_and_typed_collections(): void
     {
         $spec = $this->get('/docs/api.json')->assertOk()->json();
-        $primary = ['/events', '/events/{event}/care', '/events/{event}/readiness', '/events/{event}/teams/readiness', '/events/{event}/live', '/events/{event}/incidents', '/events/{event}/tickets', '/tickets/{ticket}/messages', '/notifications', '/events/{event}/activity', '/events/{event}/care-report'];
+        $primary = ['/events', '/events/{event}/care', '/events/{event}/lookups', '/events/{event}/readiness', '/events/{event}/teams/readiness', '/events/{event}/live', '/events/{event}/incidents', '/events/{event}/tickets', '/tickets/{ticket}/messages', '/notifications', '/events/{event}/activity', '/events/{event}/care-report'];
 
         foreach ($primary as $path) {
             $operation = $spec['paths'][$path]['get'];

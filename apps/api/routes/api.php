@@ -20,6 +20,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::get('/me', [MobileController::class, 'me']);
     Route::get('/events', [MobileController::class, 'events']);
     Route::get('/events/{event}/care', [EventCareController::class, 'overview']);
+    Route::get('/events/{event}/lookups', [EventCareController::class, 'lookups']);
     Route::get('/events/{event}/readiness', [EventCareController::class, 'readiness']);
     Route::get('/events/{event}/teams/readiness', [EventCareController::class, 'teams']);
     Route::get('/events/{event}/teams/{team}/readiness', [EventCareController::class, 'team']);

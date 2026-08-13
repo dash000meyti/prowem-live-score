@@ -55,6 +55,7 @@ class ProductSchemaDocumentTransformer implements DocumentTransformer
         $this->fixDimensionDetail($document);
         $this->fixFixtureDates($document, 'LiveControlResource', ['live_matches', 'next_matches', 'delayed_matches']);
         $this->fixFixtureDates($document, 'EventCareOverviewResource', ['next_matches']);
+        $this->fixFixtureDates($document, 'EventCareLookupsResource', ['fixtures']);
 
         foreach (['EventListResource' => ['starts_at', 'ends_at'], 'EventResource' => ['starts_at', 'ends_at', 'completed_at'], 'IncidentResource' => ['started_at', 'acknowledged_at', 'resolved_at'], 'SupportTicketResource' => ['created_at', 'first_response_at', 'sla_due_at', 'resolved_at'], 'TicketMessageResource' => ['created_at'], 'ActivityResource' => ['occurred_at'], 'NotificationResource' => ['read_at', 'created_at'], 'ReadinessCheckResource' => ['last_checked_at', 'resolved_at']] as $schema => $fields) {
             $this->dateTimes($document, $schema, $fields);

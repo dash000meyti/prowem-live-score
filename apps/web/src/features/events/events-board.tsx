@@ -2,17 +2,36 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { apiGetPaginated } from "@/shared/api/browser";
 import type { EventCard } from "@/shared/api/types";
+import { EVENT_STATUSES, PAGE_SIZE } from "@/shared/domain/enums";
+import { buildQuery } from "@/shared/lib/query";
 import { Badge } from "@/shared/ui/badge";
 import { GlassCard } from "@/shared/ui/card";
 import { EmptyState, PageHeader } from "@/shared/ui/page-header";
 import { ErrorBanner } from "@/shared/ui/error-banner";
+import { FilterBar, FilterInput, FilterSelect, PaginationControls } from "@/shared/ui/filters";
 
 export function EventsBoard() {
+  const [status, setStatus] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [sort, setSort] = useState("starts_at");
+  const [direction, setDirection] = useState("asc");
+  const [page, setPage] = useState(1);
+  const query = buildQuery({
+    status,
+    from,
+    to,
+    sort,
+    direction,
+    page,
+    per_page: PAGE_SIZE,
+  });
   const events = useQuery({
-    queryKey: ["events"],
-    queryFn: () => apiGetPaginated<EventCard>("/events?per_page=50"),
+    queryKey: ["events", query],
+    queryFn: () => apiGetPaginated<EventCard>(`/events${query}`),
   });
 
   if (events.isError) {
@@ -22,12 +41,59 @@ export function EventsBoard() {
   const items = events.data?.data ?? [];
 
   return (
-    <div>
+    <div className="space-y-4">
       <PageHeader
         eyebrow="Your calendar"
         title="Events"
         description="Track setup, readiness and match-day status for every tournament."
       />
+      <FilterBar>
+        <FilterSelect
+          label="Status"
+          value={status}
+          onChange={(event) => {
+            setStatus(event.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="">All</option>
+          {EVENT_STATUSES.map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
+        </FilterSelect>
+        <FilterInput
+          label="From"
+          type="date"
+          value={from}
+          onChange={(event) => {
+            setFrom(event.target.value);
+            setPage(1);
+          }}
+        />
+        <FilterInput
+          label="To"
+          type="date"
+          value={to}
+          onChange={(event) => {
+            setTo(event.target.value);
+            setPage(1);
+          }}
+        />
+        <FilterSelect label="Sort" value={sort} onChange={(event) => setSort(event.target.value)}>
+          <option value="starts_at">Starts at</option>
+          <option value="created_at">Created at</option>
+        </FilterSelect>
+        <FilterSelect
+          label="Direction"
+          value={direction}
+          onChange={(event) => setDirection(event.target.value)}
+        >
+          <option value="asc">Ascending</option>
+          <option value="desc">Descending</option>
+        </FilterSelect>
+      </FilterBar>
       {items.length === 0 && !events.isLoading ? (
         <EmptyState title="No events yet" description="When a tournament is scheduled, it will appear here." />
       ) : (
@@ -65,12 +131,16 @@ export function EventsBoard() {
                   <span className="text-prowem-muted">
                     {event.open_incidents_count} incidents
                   </span>
+                  <span className="text-prowem-muted">
+                    {event.open_tickets_count} tickets
+                  </span>
                 </div>
               </GlassCard>
             </Link>
           ))}
         </div>
       )}
+      <PaginationControls pagination={events.data?.meta.pagination} onPageChange={setPage} />
     </div>
   );
 }
