@@ -18,6 +18,7 @@ Route::post('/auth/login', [AuthController::class, 'login'])->middleware('thrott
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/me', [MobileController::class, 'me']);
+    Route::get('/events/summary', [MobileController::class, 'eventSummary']);
     Route::get('/events', [MobileController::class, 'events']);
     Route::get('/events/{event}/care', [EventCareController::class, 'overview']);
     Route::get('/events/{event}/lookups', [EventCareController::class, 'lookups']);
@@ -36,6 +37,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::get('/incidents/{incident}', [IncidentController::class, 'show']);
     Route::patch('/incidents/{incident}', [IncidentController::class, 'update']);
     Route::get('/events/{event}/tickets', [TicketController::class, 'index']);
+    Route::get('/events/{event}/support-home', [TicketController::class, 'home']);
     Route::post('/events/{event}/tickets', [TicketController::class, 'store']);
     Route::get('/tickets/{ticket}', [TicketController::class, 'show']);
     Route::patch('/tickets/{ticket}', [TicketController::class, 'update']);

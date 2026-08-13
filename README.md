@@ -5,6 +5,7 @@ Monorepo for **Event Care**: operational readiness, incidents, technical escalat
 ```text
 apps/api    Laravel 13 API (PostgreSQL, Redis, Sanctum, Reverb)
 apps/web    Next.js App Router UI
+apps/mobile Flutter mobile client (feature-oriented)
 ```
 
 The API is the source of truth. The web app does not recalculate readiness scores, SLA state, or ranking.
@@ -26,6 +27,7 @@ Each application owns its build:
 ```text
 apps/api/Dockerfile        Laravel development and production targets
 apps/web/Dockerfile        Next.js development and production targets
+apps/mobile                Flutter app with feature-oriented layers
 compose.yaml               Local development stack
 compose.prod.yaml          Immutable demo/production stack
 deploy/nginx               Public HTTP and WebSocket gateway

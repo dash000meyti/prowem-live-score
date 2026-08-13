@@ -17,6 +17,7 @@ use App\Models\ReadinessCheck;
 use App\Services\EventReadinessService;
 use App\Services\ReadinessCalculator;
 use Dedoc\Scramble\Attributes\Response;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 
 class MobileController extends Controller
@@ -35,7 +36,7 @@ class MobileController extends Controller
     public function events(EventIndexRequest $request): JsonResponse
     {
         $u = $request->user();
-        $q = Event::query()->when($u->role === UserRole::Organizer, fn ($q) => $q->where('account_id', $u->account_id))->when($request->status, fn ($q, $v) => $q->where('status', $v))->when($request->from, fn ($q, $v) => $q->where('starts_at', '>=', $v))->when($request->to, fn ($q, $v) => $q->where('starts_at', '<=', $v))->with(['venues', 'readinessChecks'])->withCount(['teams', 'venues', 'incidents as open_incidents_count' => fn ($q) => $q->where('status', '!=', 'resolved'), 'incidents as critical_incidents_count' => fn ($q) => $q->where('status', '!=', 'resolved')->where('severity', 'critical'), 'tickets as open_tickets_count' => fn ($q) => $q->where('status', '!=', 'resolved')]);
+        $q = $this->visibleEvents($u)->when($request->status, fn ($q, $v) => $q->where('status', $v))->when($request->boolean('needs_attention'), fn ($q) => $this->needsAttention($q))->when($request->search, fn ($q, $v) => $q->where(fn ($q) => $q->where('name', 'ilike', "%{$v}%")->orWhere('external_reference', 'ilike', "%{$v}%")))->when($request->from, fn ($q, $v) => $q->where('starts_at', '>=', $v))->when($request->to, fn ($q, $v) => $q->where('starts_at', '<=', $v))->with(['venues', 'readinessChecks'])->withCount(['teams', 'venues', 'incidents as open_incidents_count' => fn ($q) => $q->where('status', '!=', 'resolved'), 'incidents as critical_incidents_count' => fn ($q) => $q->where('status', '!=', 'resolved')->where('severity', 'critical'), 'tickets as open_tickets_count' => fn ($q) => $q->where('status', '!=', 'resolved')]);
         $p = $q->orderBy($request->input('sort', 'starts_at'), $request->input('direction', 'asc'))->paginate($request->perPage())->withQueryString();
         $p->getCollection()->each(function ($event) {
             $event->venue_summary = $event->venues->first()?->only(['id', 'name']);
@@ -43,6 +44,26 @@ class MobileController extends Controller
         });
 
         return ApiResponse::paginated($p, EventListResource::class, 'Events retrieved successfully.');
+    }
+
+    public function eventSummary(): JsonResponse
+    {
+        $query = $this->visibleEvents(request()->user());
+        $statusCounts = (clone $query)->selectRaw('status, count(*) as aggregate')->groupBy('status')->pluck('aggregate', 'status');
+
+        return ApiResponse::success(['all' => (clone $query)->count(), 'needs_attention' => $this->needsAttention(clone $query)->count(), 'preparing' => (int) ($statusCounts['preparing'] ?? 0), 'ready' => (int) ($statusCounts['ready'] ?? 0), 'live' => (int) ($statusCounts['live'] ?? 0), 'completed' => (int) ($statusCounts['completed'] ?? 0), 'cancelled' => (int) ($statusCounts['cancelled'] ?? 0)], 'Event summary retrieved successfully.');
+    }
+
+    private function visibleEvents($user): Builder
+    {
+        return Event::query()->when($user->role === UserRole::Organizer, fn ($q) => $q->where('account_id', $user->account_id));
+    }
+
+    private function needsAttention(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query): void {
+            $query->whereHas('readinessChecks', fn ($q) => $q->where('status', '!=', ReadinessStatus::Ready->value))->orWhereHas('incidents', fn ($q) => $q->where('status', '!=', 'resolved'))->orWhereHas('tickets', fn ($q) => $q->where('status', '!=', 'resolved'));
+        });
     }
 
     #[Response(type: 'array{success:true,message:string|null,data:\App\Http\Resources\ReadinessDimensionDetailResource}')]

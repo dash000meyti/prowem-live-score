@@ -20,7 +20,7 @@ export function EventNav({ eventId }: { eventId: string }) {
   const base = `/events/${eventId}`;
 
   return (
-    <nav className="mb-6 flex items-center gap-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <nav className="event-context-nav mb-6 items-center gap-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {links.map(([path, label]) => {
         const href = `${base}${path}`;
         const active = path === "" ? pathname === base : pathname.startsWith(href);
@@ -31,7 +31,7 @@ export function EventNav({ eventId }: { eventId: string }) {
             className={cn(
               "shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition sm:text-xs",
               active
-                ? "bg-white/10 text-white"
+                ? "border border-prowem-coral/30 bg-prowem-coral/10 text-prowem-coral"
                 : "text-prowem-muted hover:bg-white/5 hover:text-white",
             )}
           >

@@ -91,6 +91,16 @@ export type EventCard = {
   open_tickets_count: number;
 };
 
+export type EventSummary = {
+  all: number;
+  needs_attention: number;
+  preparing: number;
+  ready: number;
+  live: number;
+  completed: number;
+  cancelled: number;
+};
+
 export type EventDetail = {
   id: number;
   external_reference: string | null;
@@ -144,18 +154,29 @@ export type Ticket = {
   event: { id: number; name: string | null };
   incident: { id: number; category: string; title: string } | null;
   affected_service: string | null;
+  location: string | null;
   priority: TicketPriority;
   status: TicketStatus;
   subject: string;
   description: string;
   assignee: { id: number; name: string } | null;
   created_at: string | null;
+  updated_at: string | null;
   first_response_at: string | null;
   sla_due_at: string;
   sla_status: SlaStatus;
+  sla_remaining_seconds: number;
   resolved_at: string | null;
   resolution: string | null;
   resolution_code: string | null;
+};
+
+export type SupportHome = {
+  event: { id: number; name: string; status: EventStatus };
+  critical: Ticket | null;
+  open: Ticket[];
+  resolved: Ticket[];
+  counts: { open: number; resolved: number };
 };
 
 export type TicketMessage = {
@@ -219,6 +240,8 @@ export type CareOverview = {
     kickoff_at: string;
     status: string;
     field: string | null;
+    home_team: LookupTeam | null;
+    away_team: LookupTeam | null;
   }[];
   recent_activity: Activity[];
 };

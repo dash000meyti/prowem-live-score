@@ -1,156 +1,75 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { AlertTriangle, ArrowRight, CalendarDays, CheckCircle2, CircleDollarSign, Clock3, MapPin, Radio, ShieldAlert, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { apiGet } from "@/shared/api/browser";
-import type { CareOverview } from "@/shared/api/types";
-import { useEventRealtime } from "@/shared/realtime/hooks";
-import { Badge } from "@/shared/ui/badge";
-import { Card, CardTitle } from "@/shared/ui/card";
-import { ErrorBanner } from "@/shared/ui/error-banner";
-import { PageHeader } from "@/shared/ui/page-header";
+import type { CareOverview, ReadinessCheck } from "@/shared/api/types";
 import { formatWhen } from "@/shared/lib/labels";
-import { EventStatusActions } from "@/features/events/status-actions";
+import { useEventRealtime } from "@/shared/realtime/hooks";
+import { ErrorBanner } from "@/shared/ui/error-banner";
 
 export function EventHome() {
-  const params = useParams<{ eventId: string }>();
-  const [error, setError] = useState<unknown>(null);
-  useEventRealtime(params.eventId);
-  const query = useQuery({
-    queryKey: ["event", params.eventId, "care"],
-    queryFn: () => apiGet<CareOverview>(`/events/${params.eventId}/care`),
-  });
+  const { eventId } = useParams<{ eventId: string }>();
+  useEventRealtime(eventId);
+  const query = useQuery({ queryKey: ["event", eventId, "care"], queryFn: () => apiGet<CareOverview>(`/events/${eventId}/care`) });
 
-  if (query.isError) {
-    return <ErrorBanner error={query.error} />;
-  }
-
+  if (query.isError) return <ErrorBanner error={query.error} />;
+  if (!query.data) return <div className="event-dashboard-state">Loading event care…</div>;
   const data = query.data;
-  if (!data) {
-    return <p className="text-prowem-muted">Loading event care…</p>;
-  }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        eyebrow={data.event.external_reference ?? "Event hub"}
-        title={data.event.name}
-        description={`${data.event.venue?.name ?? "No venue"} · ${data.event.team_count ?? 0} teams`}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge value={data.event.status} />
-            <Badge value={data.readiness.status} />
-            <EventStatusActions
-              eventId={params.eventId}
-              status={data.event.status}
-              onError={setError}
-            />
+    <div className="event-dashboard">
+      <section className="event-dashboard-hero glass-panel-strong">
+        <div className="event-dashboard-identity">
+          <EventCrest name={data.event.name} />
+          <div>
+            <p>{data.event.external_reference ?? "EVENT HOME"}</p>
+            <h1>{data.event.name}</h1>
+            <div className="event-dashboard-meta"><span><MapPin />{data.event.venue?.name ?? "Venue pending"}</span><span><CalendarDays />{dateRange(data.event.starts_at, data.event.ends_at)}</span></div>
+            <span className="event-dashboard-status">{data.event.status}</span>
           </div>
-        }
-      />
-      <ErrorBanner error={error} />
+        </div>
+        <div className="event-dashboard-readiness">
+          <div className="readiness-ring" style={{ "--score": `${data.readiness.score * 3.6}deg` } as React.CSSProperties}><div><b>{data.readiness.score}%</b><small>Readiness</small></div></div>
+          <div className="readiness-summary"><strong><ShieldAlert />{data.readiness.status}</strong><p className="is-danger"><AlertTriangle />{data.readiness.critical_blockers_count} critical blockers</p><p className="is-warning"><CheckCircle2 />{data.readiness.actions_required_count} actions required</p></div>
+        </div>
+      </section>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardTitle>Readiness</CardTitle>
-          <p className="font-display text-4xl font-bold">{data.readiness.score}</p>
-          <p className="text-sm text-prowem-muted">
-            {data.readiness.critical_blockers_count} critical blockers ·{" "}
-            {data.readiness.actions_required_count} actions
-          </p>
-        </Card>
-        <Card>
-          <CardTitle>Needs attention</CardTitle>
-          <ul className="space-y-2 text-sm">
-            {data.needs_attention.map((item) => (
-              <li key={item.id}>
-                <Link
-                  className="text-prowem-coral hover:underline"
-                  href={`/events/${params.eventId}/readiness/${item.dimension}`}
-                >
-                  <Badge value={item.status} /> {item.message ?? item.check_type}
-                </Link>
-              </li>
-            ))}
-            {data.needs_attention.length === 0 ? (
-              <li className="text-prowem-muted">Nothing blocked.</li>
-            ) : null}
-          </ul>
-        </Card>
-        <Card>
-          <CardTitle>Next matches</CardTitle>
-          <ul className="space-y-2 text-sm">
-            {data.next_matches.map((match) => (
-              <li key={match.id}>
-                #{match.number} · {match.field ?? "TBC"} · {match.status}
-              </li>
-            ))}
-            {data.next_matches.length === 0 ? (
-              <li className="text-prowem-muted">No upcoming matches.</li>
-            ) : null}
-          </ul>
-        </Card>
+      <DashboardSection title="Needs attention" href={`/events/${eventId}/readiness`} linkLabel={`View all (${data.needs_attention.length})`}>
+        {data.needs_attention.length ? <div className="attention-grid">{data.needs_attention.slice(0, 3).map((item, index) => <AttentionCard key={item.id} item={item} index={index} eventId={eventId} />)}</div> : <EmptyLine text="Everything is on track." />}
+      </DashboardSection>
+
+      <div className="event-dashboard-columns">
+        <DashboardSection title="Upcoming matches" href={`/events/${eventId}/live`} linkLabel="View all">
+          {data.next_matches.length ? <div className="match-list">{data.next_matches.slice(0, 4).map((match) => <Link key={match.id} href={`/events/${eventId}/live`}><time>{matchTime(match.kickoff_at)}</time><div><b>{match.home_team?.name ?? `Team ${match.number}`}</b><span>vs</span><b>{match.away_team?.name ?? "TBC"}</b></div><em>{match.field ?? "Field TBC"}</em><ArrowRight /></Link>)}</div> : <EmptyLine text="No upcoming matches." />}
+        </DashboardSection>
+        <DashboardSection title="Recent activity" href={`/events/${eventId}/activity`} linkLabel="View all">
+          {data.recent_activity.length ? <div className="activity-list">{data.recent_activity.slice(0, 5).map((item) => <Link key={item.id} href={`/events/${eventId}/activity`}><span className={activityTone(item.type)}>{activityIcon(item.type)}</span><div><b>{item.title}</b><small>{item.actor?.name ?? "System"} · {formatWhen(item.occurred_at)}</small></div><time>{shortTime(item.occurred_at)}</time></Link>)}</div> : <EmptyLine text="No recent activity." />}
+        </DashboardSection>
       </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardTitle>Critical incidents</CardTitle>
-          <ul className="space-y-2 text-sm">
-            {data.open_critical_incidents.map((incident) => (
-              <li key={incident.id}>
-                <Link
-                  className="text-prowem-coral hover:underline"
-                  href={`/events/${params.eventId}/incidents/${incident.id}`}
-                >
-                  {incident.title}
-                </Link>
-              </li>
-            ))}
-            {data.open_critical_incidents.length === 0 ? (
-              <li className="text-prowem-muted">None open.</li>
-            ) : null}
-          </ul>
-        </Card>
-        <Card>
-          <CardTitle>Open tickets</CardTitle>
-          <ul className="space-y-2 text-sm">
-            {data.open_tickets.map((ticket) => (
-              <li key={ticket.id}>
-                <Link
-                  className="text-prowem-coral hover:underline"
-                  href={`/events/${params.eventId}/tickets/${ticket.id}`}
-                >
-                  {ticket.reference} · {ticket.subject}
-                </Link>
-                <Badge className="ml-2" value={ticket.sla_status} />
-              </li>
-            ))}
-            {data.open_tickets.length === 0 ? (
-              <li className="text-prowem-muted">None open.</li>
-            ) : null}
-          </ul>
-        </Card>
-      </div>
-
-      <Card>
-        <CardTitle>Recent activity</CardTitle>
-        <ul className="space-y-3 text-sm">
-          {data.recent_activity.map((item) => (
-            <li key={item.id}>
-              <p className="font-medium">{item.title}</p>
-              <p className="text-prowem-muted">{item.description}</p>
-              <p className="mt-1 text-xs text-prowem-muted">
-                {item.actor?.name ?? "System"} · {formatWhen(item.occurred_at)}
-              </p>
-            </li>
-          ))}
-          {data.recent_activity.length === 0 ? (
-            <li className="text-prowem-muted">No recent activity.</li>
-          ) : null}
-        </ul>
-      </Card>
     </div>
   );
 }
+
+function DashboardSection({ title, href, linkLabel, children }: { title: string; href: string; linkLabel: string; children: React.ReactNode }) {
+  return <section className="dashboard-section"><header><h2>{title}</h2><Link href={href}>{linkLabel}<ArrowRight /></Link></header>{children}</section>;
+}
+
+function AttentionCard({ item, index, eventId }: { item: ReadinessCheck; index: number; eventId: string }) {
+  const critical = item.status === "blocked" || item.is_critical;
+  const action = typeof item.metadata?.action_label === "string" ? item.metadata.action_label : critical ? "Resolve now" : actionLabel(item.check_type);
+  return <article className={`attention-card ${critical ? "is-critical" : "is-warning"}`}><div className="attention-card-icon">{attentionIcon(item.dimension)}<b>{index + 1}</b></div><div className="attention-card-copy"><span>{critical ? "Critical" : "Warning"}</span><h3>{item.message ?? readable(item.check_type)}</h3><p>{typeof item.metadata?.description === "string" ? item.metadata.description : `${readable(item.dimension)} requires attention before kickoff.`}</p><small><Clock3 />{item.last_checked_at ? `Detected ${formatWhen(item.last_checked_at)}` : "Action required"}</small></div><Link href={`/events/${eventId}/readiness/${item.dimension}`}>{action}<ArrowRight /></Link></article>;
+}
+
+function EventCrest({ name }: { name: string }) { const initials = name.split(/\s+/).slice(0, 3).map((part) => part[0]).join(""); return <div className="event-dashboard-crest"><span>{initials}</span><small>EVENT CARE</small></div>; }
+function EmptyLine({ text }: { text: string }) { return <div className="event-dashboard-empty"><CheckCircle2 />{text}</div>; }
+function readable(value: string) { return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()); }
+function actionLabel(type: string) { if (type.includes("payment")) return "Verify payment"; if (type.includes("referee")) return "Request confirmation"; return "Review"; }
+function attentionIcon(dimension: string) { if (dimension === "streaming") return <Radio />; if (dimension === "teams") return <CircleDollarSign />; if (dimension === "referees") return <UserCheck />; return <AlertTriangle />; }
+function activityIcon(type: string) { return type.includes("incident") || type.includes("issue") ? <AlertTriangle /> : <CheckCircle2 />; }
+function activityTone(type: string) { return type.includes("incident") || type.includes("issue") ? "danger" : "success"; }
+function shortTime(value: string) { return new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(new Date(value)); }
+function matchTime(value: string) { return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value)); }
+function dateRange(from: string, to: string) { const format = (value: string) => new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value)); return `${format(from)} – ${format(to)}`; }

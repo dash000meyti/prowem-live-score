@@ -1,146 +1,109 @@
 "use client";
 
-import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { apiGetPaginated } from "@/shared/api/browser";
-import type { EventCard } from "@/shared/api/types";
-import { EVENT_STATUSES, PAGE_SIZE } from "@/shared/domain/enums";
-import { buildQuery } from "@/shared/lib/query";
-import { Badge } from "@/shared/ui/badge";
-import { GlassCard } from "@/shared/ui/card";
-import { EmptyState, PageHeader } from "@/shared/ui/page-header";
+import { apiGet, apiGetPaginated } from "@/shared/api/browser";
+import type { EventCard, EventStatus, EventSummary } from "@/shared/api/types";
 import { ErrorBanner } from "@/shared/ui/error-banner";
-import { FilterBar, FilterInput, FilterSelect, PaginationControls } from "@/shared/ui/filters";
+import { useQuery } from "@tanstack/react-query";
+import { AlertTriangle, ArrowRight, Ban, CalendarDays, Check, ChevronRight, MapPin, Search, SlidersHorizontal } from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+
+type Filter = "all" | "needs_attention" | EventStatus;
+
+const filters: { key: Filter; label: string }[] = [
+  { key: "all", label: "All Events" },
+  { key: "needs_attention", label: "Needs Attention" },
+  { key: "preparing", label: "Preparing" },
+  { key: "ready", label: "Ready" },
+  { key: "completed", label: "Completed" },
+  { key: "cancelled", label: "Cancelled" },
+];
+
+const groupOrder: EventStatus[] = ["live", "preparing", "ready", "completed", "cancelled"];
 
 export function EventsBoard() {
-  const [status, setStatus] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [sort, setSort] = useState("starts_at");
-  const [direction, setDirection] = useState("asc");
-  const [page, setPage] = useState(1);
-  const query = buildQuery({
-    status,
-    from,
-    to,
-    sort,
-    direction,
-    page,
-    per_page: PAGE_SIZE,
-  });
-  const events = useQuery({
-    queryKey: ["events", query],
-    queryFn: () => apiGetPaginated<EventCard>(`/events${query}`),
-  });
+  const [filter, setFilter] = useState<Filter>("all");
+  const [search, setSearch] = useState("");
+  const params = new URLSearchParams({ per_page: "100", sort: "starts_at", direction: "asc" });
+  if (filter === "needs_attention") params.set("needs_attention", "1");
+  else if (filter !== "all") params.set("status", filter);
+  if (search.trim()) params.set("search", search.trim());
 
-  if (events.isError) {
-    return <ErrorBanner error={events.error} />;
-  }
-
-  const items = events.data?.data ?? [];
+  const events = useQuery({ queryKey: ["events", filter, search], queryFn: () => apiGetPaginated<EventCard>(`/events?${params}`) });
+  const summary = useQuery({ queryKey: ["events-summary"], queryFn: () => apiGet<EventSummary>("/events/summary") });
+  const grouped = useMemo(() => groupOrder.map((status) => ({ status, items: (events.data?.data ?? []).filter((event) => event.status === status) })).filter((group) => group.items.length), [events.data]);
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        eyebrow="Your calendar"
-        title="Events"
-        description="Track setup, readiness and match-day status for every tournament."
-      />
-      <FilterBar>
-        <FilterSelect
-          label="Status"
-          value={status}
-          onChange={(event) => {
-            setStatus(event.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">All</option>
-          {EVENT_STATUSES.map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
-        </FilterSelect>
-        <FilterInput
-          label="From"
-          type="date"
-          value={from}
-          onChange={(event) => {
-            setFrom(event.target.value);
-            setPage(1);
-          }}
-        />
-        <FilterInput
-          label="To"
-          type="date"
-          value={to}
-          onChange={(event) => {
-            setTo(event.target.value);
-            setPage(1);
-          }}
-        />
-        <FilterSelect label="Sort" value={sort} onChange={(event) => setSort(event.target.value)}>
-          <option value="starts_at">Starts at</option>
-          <option value="created_at">Created at</option>
-        </FilterSelect>
-        <FilterSelect
-          label="Direction"
-          value={direction}
-          onChange={(event) => setDirection(event.target.value)}
-        >
-          <option value="asc">Ascending</option>
-          <option value="desc">Descending</option>
-        </FilterSelect>
-      </FilterBar>
-      {items.length === 0 && !events.isLoading ? (
-        <EmptyState title="No events yet" description="When a tournament is scheduled, it will appear here." />
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {items.map((event) => (
-            <Link key={event.id} href={`/events/${event.id}`} className="block h-full">
-              <GlassCard
-                glow={
-                  event.status === "live"
-                    ? "coral"
-                    : event.readiness.status === "blocked"
-                      ? "orange"
-                      : "green"
-                }
-                className="flex h-full flex-col gap-4 transition hover:border-white/25"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-prowem-muted">
-                      {event.external_reference}
-                    </p>
-                    <p className="mt-1 font-display text-xl font-bold uppercase tracking-wide">
-                      {event.name}
-                    </p>
-                  </div>
-                  <Badge value={event.status} />
-                </div>
-                <p className="text-sm text-prowem-muted">
-                  {event.venue?.name ?? "No venue"} · {event.teams_count} teams ·{" "}
-                  {event.fields_count} fields
-                </p>
-                <div className="mt-auto flex flex-wrap items-center gap-2 text-sm">
-                  <Badge value={event.readiness.status} />
-                  <span className="text-prowem-muted">Score {event.readiness.score}</span>
-                  <span className="text-prowem-muted">
-                    {event.open_incidents_count} incidents
-                  </span>
-                  <span className="text-prowem-muted">
-                    {event.open_tickets_count} tickets
-                  </span>
-                </div>
-              </GlassCard>
-            </Link>
-          ))}
+    <div className="events-page">
+      <header className="events-heading">
+        <div><h1>My Events</h1><p>Monitor event readiness and act on what needs attention.</p></div>
+        <div className="events-tools">
+          <label><Search aria-hidden="true" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search events…" /></label>
+          <button type="button" className="events-filter-button" aria-label="Filter events"><SlidersHorizontal /></button>
         </div>
-      )}
-      <PaginationControls pagination={events.data?.meta.pagination} onPageChange={setPage} />
+      </header>
+
+      <nav className="events-tabs" aria-label="Event filters">
+        {filters.map((item) => <button key={item.key} type="button" className={filter === item.key ? "is-active" : ""} onClick={() => setFilter(item.key)}><span>{item.label}</span><b>{summary.data?.[item.key] ?? 0}</b></button>)}
+      </nav>
+
+      {events.isError ? <ErrorBanner error={events.error} /> : null}
+      {events.isLoading ? <div className="events-loading">Loading events…</div> : null}
+      {!events.isLoading && grouped.length === 0 ? <div className="events-empty">No events match these filters.</div> : null}
+
+      <div className="event-groups">
+        {grouped.map((group) => (
+          <section key={group.status} className={`event-group event-group--${group.status}`}>
+            <h2>{group.status === "preparing" ? "Upcoming" : group.status}</h2>
+            <div className="event-group__list">{group.items.map((event) => <EventRow key={event.id} event={event} />)}</div>
+          </section>
+        ))}
+      </div>
     </div>
   );
 }
+
+function EventRow({ event }: { event: EventCard }) {
+  const date = `${formatDate(event.starts_at)} – ${formatDate(event.ends_at)}`;
+  const issueCount = event.open_incidents_count + event.open_tickets_count;
+  const tone = event.status === "live" ? "red" : event.status === "preparing" ? "amber" : event.status === "ready" ? "green" : "neutral";
+
+  return (
+    <article className={`event-row event-row--${tone}`}>
+      <div className="event-identity">
+        <EventCrest event={event} />
+        <div className="event-copy">
+          <div className="event-title"><h3>{event.name}</h3><span>{event.status}</span></div>
+          <p><MapPin />{event.venue?.name ?? "Venue pending"}</p>
+          <p><CalendarDays />{date}</p>
+        </div>
+      </div>
+      <div className="event-health">
+        {event.status === "live" ? <><Metric value={event.critical_incidents_count} label="Critical" icon={<AlertTriangle />} /><Metric value={issueCount} label="Open issues" /></> : null}
+        {event.status === "preparing" ? <><Progress value={event.readiness.score} tone="amber" /><Metric value={event.readiness.critical_blockers_count} label="Blockers" /></> : null}
+        {event.status === "ready" ? <><Progress value={event.readiness.score} tone="green" /><div className="event-message"><strong>Ready for kickoff</strong><span>All tasks complete</span></div></> : null}
+        {event.status === "completed" ? <><span className="event-state-icon"><Check /></span><div className="event-message"><strong>Event completed</strong><span>Thank you for a great event!</span></div></> : null}
+        {event.status === "cancelled" ? <><span className="event-state-icon"><Ban /></span><div className="event-message"><strong>Event cancelled</strong><span>No further actions required.</span></div></> : null}
+      </div>
+      <div className="event-actions">
+        <Link href={`/events/${event.id}`} className="event-primary-action">{event.status === "live" ? "Open issues" : event.status === "preparing" ? "Continue prep" : event.status === "completed" ? "View report" : "View details"}<ArrowRight /></Link>
+        <Link href={`/events/${event.id}`} className="event-secondary-action">View event <ChevronRight /></Link>
+      </div>
+    </article>
+  );
+}
+
+function EventCrest({ event }: { event: EventCard }) {
+  const words = event.name.toUpperCase().split(" ").slice(0, 3);
+  return <div className={`event-crest event-crest--${event.status}`}><span>{words.map((word) => <b key={word}>{word}</b>)}</span><i>⚽</i></div>;
+}
+
+function Metric({ value, label, icon }: { value: number; label: string; icon?: React.ReactNode }) {
+  return <div className="event-metric"><b>{value}</b><span>{label}</span>{icon}</div>;
+}
+
+function Progress({ value, tone }: { value: number; tone: string }) {
+  return <div className={`event-progress event-progress--${tone}`} style={{ "--progress": `${Math.max(0, Math.min(100, value)) * 3.6}deg` } as React.CSSProperties}><span>{value}%</span></div>;
+}
+
+function formatDate(value: string) { return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value)); }

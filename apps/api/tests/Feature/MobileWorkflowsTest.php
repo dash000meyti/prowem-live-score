@@ -50,6 +50,21 @@ class MobileWorkflowsTest extends TestCase
         $this->getJson("/api/v1/events/{$event->id}/care")->assertForbidden();
     }
 
+    public function test_event_summary_and_attention_filter_are_server_calculated(): void
+    {
+        $this->actingAs($this->organizer());
+        $summary = $this->getJson('/api/v1/events/summary')->assertOk();
+        $summary->assertJsonStructure(['data' => ['all', 'needs_attention', 'preparing', 'ready', 'live', 'completed', 'cancelled']]);
+        $this->assertGreaterThan(0, $summary->json('data.needs_attention'));
+        $response = $this->getJson('/api/v1/events?needs_attention=1&per_page=100')->assertOk();
+        $this->assertSame($summary->json('data.needs_attention'), $response->json('meta.pagination.total'));
+        collect($response->json('data'))->each(function (array $event): void {
+            $this->assertTrue(
+                $event['readiness']['status'] !== 'ready' || $event['open_incidents_count'] > 0 || $event['open_tickets_count'] > 0
+            );
+        });
+    }
+
     public function test_team_business_actions_are_idempotent_and_propagate_readiness(): void
     {
         $this->actingAs($this->organizer());

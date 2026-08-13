@@ -1,45 +1,18 @@
 "use client";
 
+import { ApiError } from "@/shared/api/client";
+import { ErrorBanner } from "@/shared/ui/error-banner";
+import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { GlassCard } from "@/shared/ui/card";
-import { ErrorBanner } from "@/shared/ui/error-banner";
-import { ApiError } from "@/shared/api/client";
-
-const demoRoles = [
-  {
-    email: "organizer@prowem.test",
-    title: "Organizer",
-    subtitle: "Customer events, readiness and support requests",
-    glow: "orange" as const,
-  },
-  {
-    email: "support@prowem.test",
-    title: "Support Agent",
-    subtitle: "Technical incidents and ticket administration",
-    glow: "cyan" as const,
-  },
-  {
-    email: "lead@prowem.test",
-    title: "Support Lead",
-    subtitle: "Manage events, SLA and escalation",
-    glow: "purple" as const,
-  },
-  {
-    email: "admin@prowem.test",
-    title: "Admin",
-    subtitle: "Full Event Care access",
-    glow: "coral" as const,
-  },
-];
 
 export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState<unknown>(null);
   const [pending, setPending] = useState(false);
-  const [email, setEmail] = useState("organizer@prowem.test");
-  const [password, setPassword] = useState("password");
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   async function submit(nextEmail = email, nextPassword = password) {
     setPending(true);
@@ -52,93 +25,68 @@ export function LoginForm() {
       });
       const json = await response.json();
       if (!response.ok || json.success !== true) {
-        setError(
-          new ApiError(
-            json.message ?? "Unable to sign in.",
-            json.error?.code ?? "INVALID_CREDENTIALS",
-            response.status,
-            json.error?.details,
-          ),
-        );
+        setError(new ApiError(json.message ?? "Unable to sign in.", json.error?.code ?? "INVALID_CREDENTIALS", response.status, json.error?.details));
         return;
       }
       router.push("/events");
       router.refresh();
     } catch {
-      setError(
-        new ApiError(
-          "Unable to reach the sign-in service. Please try again.",
-          "AUTH_SERVICE_UNAVAILABLE",
-          503,
-        ),
-      );
+      setError(new ApiError("Unable to reach the sign-in service. Please try again.", "AUTH_SERVICE_UNAVAILABLE", 503));
     } finally {
       setPending(false);
     }
   }
 
+  function useDemoAccount() {
+    setEmail("organizer@prowem.test");
+    setPassword("password");
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2">
-        {demoRoles.map((role) => (
-          <button
-            key={role.email}
-            type="button"
-            className="text-left"
-            onClick={() => {
-              setEmail(role.email);
-              setPassword("password");
-              void submit(role.email, "password");
-            }}
-          >
-            <GlassCard glow={role.glow} className="h-full transition hover:border-white/25">
-              <p className="text-xs uppercase tracking-wide text-prowem-muted">{role.email}</p>
-              <h2 className="mt-2 font-display text-2xl font-bold uppercase">{role.title}</h2>
-              <p className="mt-2 text-sm text-prowem-muted">{role.subtitle}</p>
-              <p className="mt-4 text-sm font-semibold text-prowem-coral">Continue →</p>
-            </GlassCard>
-          </button>
-        ))}
+    <section className="login-card">
+      <div className="login-card__brand">
+        <span className="prowem-mark prowem-mark--small" aria-hidden="true"><i /></span>
+        <h2>PROWEM</h2>
+        <p>Event Care</p>
       </div>
 
-      <GlassCard strong>
-        <form
-          action="/api/auth/login"
-          method="post"
-          className="space-y-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void submit();
-          }}
-        >
-          <ErrorBanner error={error} />
-          <label className="block text-sm">
-            <span className="mb-1 block text-prowem-muted">Email</span>
-            <input
-              name="email"
-              type="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="input-glass"
-            />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block text-prowem-muted">Password</span>
-            <input
-              name="password"
-              type="password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="input-glass"
-            />
-          </label>
-          <Button type="submit" disabled={pending} className="w-full">
-            {pending ? "Signing in…" : "Sign in"}
-          </Button>
-        </form>
-      </GlassCard>
-    </div>
+      <div className="login-divider" aria-hidden="true"><span>⚽</span></div>
+
+      <form action="/api/auth/login" method="post" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
+        <ErrorBanner error={error} />
+
+        <label className="login-field">
+          <span>Email</span>
+          <span className="login-input-wrap">
+            <Mail aria-hidden="true" />
+            <input name="email" type="email" autoComplete="email" required placeholder="Enter your email" value={email} onChange={(event) => setEmail(event.target.value)} />
+          </span>
+        </label>
+
+        <label className="login-field">
+          <span>Password</span>
+          <span className="login-input-wrap">
+            <LockKeyhole aria-hidden="true" />
+            <input name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required placeholder="Enter your password" value={password} onChange={(event) => setPassword(event.target.value)} />
+            <button type="button" className="password-toggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Hide password" : "Show password"}>
+              {showPassword ? <EyeOff /> : <Eye />}
+            </button>
+          </span>
+        </label>
+
+        <button type="button" className="demo-login-link" onClick={useDemoAccount}>
+          Use organizer demo account
+        </button>
+
+        <button type="submit" className="login-submit" disabled={pending}>
+          <span>{pending ? "Signing in…" : "Sign In"}</span>
+          <ArrowRight aria-hidden="true" />
+        </button>
+      </form>
+
+      <div className="secure-access" aria-label="Secure access">
+        <i /><span><ShieldCheck aria-hidden="true" /> Secure access</span><i />
+      </div>
+    </section>
   );
 }

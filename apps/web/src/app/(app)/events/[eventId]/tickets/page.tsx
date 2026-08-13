@@ -1,5 +1,5 @@
-import { TicketsList } from "@/features/tickets/ticket-views";
+import { SupportHome } from "@/features/tickets/support-home";
 
 export default function Page() {
-  return <TicketsList />;
+  return <SupportHome />;
 }

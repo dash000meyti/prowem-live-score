@@ -13,6 +13,9 @@ Use stable references `VSC-2026`, `ALP-2026`, `MRC-2026`, `SLOC-2026`, `ZTC-2026
 
 ## My Events
 
+- `GET /events/summary` returns counts for all, needs-attention, and every lifecycle status independently of pagination.
+- `GET /events` also accepts `search` and `needs_attention=1`; attention is calculated by the API from readiness checks and open incidents/tickets.
+- `GET /events/{event}/support-home` returns the active P1 ticket, other open requests, resolved requests, and API-calculated SLA state/remaining time for the Support dashboard.
 - `GET /events` — `status`, `from`, `to`, `sort=starts_at|created_at`, `direction`, `page`, `per_page`.
 - Returns typed cards: event, nullable venue, counts, readiness summary, open incidents/tickets. Organizer results are customer-scoped.
 

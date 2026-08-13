@@ -39,7 +39,8 @@ class EventCareApiTest extends TestCase
     {
         $this->actingAs($this->organizer());
         $event = Event::query()->where('external_reference', 'VSC-2026')->firstOrFail();
-        $this->getJson("/api/v1/events/{$event->id}/care")->assertOk()->assertJsonStructure(['success', 'message', 'data' => ['event', 'readiness', 'open_critical_incidents', 'open_tickets', 'recent_activity']]);
+        $this->getJson("/api/v1/events/{$event->id}/care")->assertOk()->assertJsonStructure(['success', 'message', 'data' => ['event', 'readiness', 'needs_attention', 'open_critical_incidents', 'open_tickets', 'next_matches' => [['home_team', 'away_team']], 'recent_activity']]);
+        $this->getJson("/api/v1/events/{$event->id}/support-home")->assertOk()->assertJsonStructure(['success', 'message', 'data' => ['event', 'critical', 'open', 'resolved', 'counts' => ['open', 'resolved']]]);
         $this->getJson("/api/v1/events/{$event->id}/incidents?per_page=1&type=technical")->assertOk()->assertJsonStructure(['success', 'message', 'data', 'meta' => ['pagination' => ['current_page', 'per_page', 'total', 'last_page', 'from', 'to']], 'links' => ['first', 'last', 'prev', 'next']]);
     }
 

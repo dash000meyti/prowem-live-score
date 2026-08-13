@@ -26,12 +26,30 @@ class TicketController extends Controller
         return ApiResponse::paginated($q->orderBy($request->input('sort', 'created_at'), $request->input('direction', 'desc'))->paginate($request->perPage())->withQueryString(), SupportTicketResource::class, 'Tickets retrieved successfully.');
     }
 
+    #[Response(type: 'array{success:true,message:string|null,data:array{event:array{id:int,name:string,status:string},critical:\App\Http\Resources\SupportTicketResource|null,open:list<\App\Http\Resources\SupportTicketResource>,resolved:list<\App\Http\Resources\SupportTicketResource>,counts:array{open:int,resolved:int}}}')]
+    public function home(Event $event): JsonResponse
+    {
+        $this->authorize('view', $event);
+        $base = $event->tickets()->with(['assignee', 'incident', 'venue', 'fixture.venue']);
+        $open = (clone $base)->where('status', '!=', 'resolved')->orderByRaw("case priority when 'p1' then 1 when 'p2' then 2 when 'p3' then 3 else 4 end")->orderBy('sla_due_at')->limit(10)->get();
+        $resolved = (clone $base)->where('status', 'resolved')->latest('resolved_at')->limit(10)->get();
+        $critical = $open->first(fn (SupportTicket $ticket) => $ticket->priority->value === 'p1');
+
+        return ApiResponse::success([
+            'event' => ['id' => (int) $event->id, 'name' => $event->name, 'status' => $event->status->value],
+            'critical' => $critical ? (new SupportTicketResource($critical))->resolve(request()) : null,
+            'open' => SupportTicketResource::collection($open->reject(fn (SupportTicket $ticket) => $critical && $ticket->id === $critical->id)->values())->resolve(request()),
+            'resolved' => SupportTicketResource::collection($resolved)->resolve(request()),
+            'counts' => ['open' => $event->tickets()->where('status', '!=', 'resolved')->count(), 'resolved' => $event->tickets()->where('status', 'resolved')->count()],
+        ], 'Support home retrieved successfully.');
+    }
+
     #[Response(type: 'array{success: true, message: string|null, data: \App\Http\Resources\SupportTicketResource}')]
     public function show(SupportTicket $ticket): JsonResponse
     {
         $this->authorize('view', $ticket->event);
 
-        return ApiResponse::resource(new SupportTicketResource($ticket->load('assignee')), 'Ticket retrieved successfully.');
+        return ApiResponse::resource(new SupportTicketResource($ticket->load(['assignee', 'venue', 'fixture.venue'])), 'Ticket retrieved successfully.');
     }
 
     #[Response(type: 'array{success: true, message: string|null, data: \App\Http\Resources\SupportTicketResource}')]

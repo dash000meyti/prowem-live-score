@@ -36,4 +36,14 @@ class SupportTicket extends Model
     {
         return $this->belongsTo(User::class, 'assignee_id');
     }
+
+    public function venue(): BelongsTo
+    {
+        return $this->belongsTo(Venue::class);
+    }
+
+    public function fixture(): BelongsTo
+    {
+        return $this->belongsTo(Fixture::class);
+    }
 }
