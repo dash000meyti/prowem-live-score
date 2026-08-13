@@ -1,10 +1,12 @@
-name: event-care-api
+name: event-care
 
 services:
     app:
+        image: event-care-api:dev
         build:
             context: ./apps/api
             dockerfile: Dockerfile
+            target: development
         restart: unless-stopped
         volumes:
             - ./apps/api:/var/www/html
@@ -69,9 +71,11 @@ services:
             retries: 10
 
     reverb:
+        image: event-care-api:dev
         build:
             context: ./apps/api
             dockerfile: Dockerfile
+            target: development
         working_dir: /var/www/html
         command: php artisan reverb:start --host=0.0.0.0 --port=8080
         restart: unless-stopped
@@ -80,6 +84,9 @@ services:
         volumes:
             - ./apps/api:/var/www/html
             - vendor:/var/www/html/vendor
+        depends_on:
+            redis:
+                condition: service_healthy
         healthcheck:
             test: ["CMD", "php", "-r", "$$s=@fsockopen('127.0.0.1',8080,$$errno,$$errstr,2); if(!$$s){exit(1);} fclose($$s);"]
             interval: 10s
@@ -88,9 +95,11 @@ services:
             start_period: 10s
 
     queue:
+        image: event-care-api:dev
         build:
             context: ./apps/api
             dockerfile: Dockerfile
+            target: development
         working_dir: /var/www/html
         command: php artisan queue:work redis --sleep=1 --tries=3 --timeout=30
         restart: unless-stopped
@@ -98,6 +107,8 @@ services:
             - ./apps/api:/var/www/html
             - vendor:/var/www/html/vendor
         depends_on:
+            app:
+                condition: service_healthy
             redis:
                 condition: service_healthy
         healthcheck:
@@ -108,14 +119,18 @@ services:
             start_period: 10s
 
     web:
-        image: node:22-alpine
+        image: event-care-web:dev
+        build:
+            context: .
+            dockerfile: apps/web/Dockerfile
+            target: development
         working_dir: /repo
-        command: sh -c "corepack enable && pnpm install && pnpm --filter web dev"
         restart: unless-stopped
         ports:
             - "127.0.0.1:${FORWARD_WEB_PORT:-3000}:3000"
         volumes:
             - .:/repo
+            - root-node-modules:/repo/node_modules
             - web-node-modules:/repo/apps/web/node_modules
         environment:
             API_INTERNAL_URL: http://nginx
@@ -132,4 +147,5 @@ volumes:
     postgres-data:
     redis-data:
     vendor:
+    root-node-modules:
     web-node-modules:

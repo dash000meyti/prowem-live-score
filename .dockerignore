@@ -1,0 +1,15 @@
+.git
+.github
+.idea
+.vscode
+.cursor
+.corepack
+.pnpm-store
+node_modules
+**/node_modules
+**/.next
+**/.env
+**/.env.*
+apps/api
+deploy
+*.log

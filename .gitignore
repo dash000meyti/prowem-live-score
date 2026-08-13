@@ -9,6 +9,8 @@ Thumbs.db
 
 # Node
 node_modules/
+.corepack/
+.pnpm-store/
 apps/web/.next/
 apps/web/out/
 apps/web/.env.local
@@ -16,6 +18,7 @@ apps/web/.env*.local
 
 # Laravel (also ignored inside apps/api)
 apps/api/.env
+.env.production
 apps/api/vendor/
 apps/api/storage/*.key
 apps/api/storage/pail
