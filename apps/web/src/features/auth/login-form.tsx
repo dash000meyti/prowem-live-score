@@ -44,26 +44,37 @@ export function LoginForm() {
   async function submit(nextEmail = email, nextPassword = password) {
     setPending(true);
     setError(null);
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ email: nextEmail, password: nextPassword }),
-    });
-    const json = await response.json();
-    setPending(false);
-    if (!response.ok || json.success !== true) {
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ email: nextEmail, password: nextPassword }),
+      });
+      const json = await response.json();
+      if (!response.ok || json.success !== true) {
+        setError(
+          new ApiError(
+            json.message ?? "Unable to sign in.",
+            json.error?.code ?? "INVALID_CREDENTIALS",
+            response.status,
+            json.error?.details,
+          ),
+        );
+        return;
+      }
+      router.push("/events");
+      router.refresh();
+    } catch {
       setError(
         new ApiError(
-          json.message ?? "Unable to sign in.",
-          json.error?.code ?? "INVALID_CREDENTIALS",
-          response.status,
-          json.error?.details,
+          "Unable to reach the sign-in service. Please try again.",
+          "AUTH_SERVICE_UNAVAILABLE",
+          503,
         ),
       );
-      return;
+    } finally {
+      setPending(false);
     }
-    router.push("/events");
-    router.refresh();
   }
 
   return (
@@ -92,6 +103,8 @@ export function LoginForm() {
 
       <GlassCard strong>
         <form
+          action="/api/auth/login"
+          method="post"
           className="space-y-4"
           onSubmit={(event) => {
             event.preventDefault();
