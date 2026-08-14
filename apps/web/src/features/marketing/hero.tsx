@@ -46,7 +46,7 @@ export function LandingHero({
           An integrated system for preparing, managing, and improving sports events.
           </p>
 
-          <div className="mt-6 grid grid-cols-2 justify-items-center gap-2 sm:mt-8 sm:flex sm:flex-wrap sm:justify-center sm:gap-3 lg:justify-start">
+          <div className="mx-auto mt-6 grid w-fit grid-cols-2 gap-2 sm:mt-8 sm:flex sm:flex-wrap sm:justify-center sm:gap-3 lg:mx-0 lg:justify-start">
             {pillars.map((item) => (
               <div
                 key={item.label}
