@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
 import '../features/auth/presentation/controllers/login_controller.dart';
-import '../features/auth/presentation/pages/login_page.dart';
+import '../features/landing/presentation/pages/landing_page.dart';
 
 class EventCareApp extends StatelessWidget {
   const EventCareApp({required this.loginController, super.key});
@@ -14,6 +14,6 @@ class EventCareApp extends StatelessWidget {
         title: 'PROWEM Event Care',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark,
-        home: LoginPage(controller: loginController),
+        home: LandingPage(loginController: loginController),
       );
 }

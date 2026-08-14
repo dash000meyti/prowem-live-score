@@ -40,16 +40,31 @@ class EventsRemoteDataSource {
       _request(Uri.parse('$baseUrl$path'));
 
   Future<Map<String, dynamic>> _request(Uri uri) async {
-    final response = await _client.get(uri, headers: {
-      'Accept': 'application/json',
-      'Authorization': 'Bearer $token'
-    });
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    late http.Response response;
+    try {
+      response = await _client.get(uri, headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token'
+      }).timeout(const Duration(seconds: 20));
+    } catch (_) {
+      throw const AppException(
+          'Event Care is unavailable. Check your connection and try again.',
+          code: 'NETWORK_UNAVAILABLE');
+    }
+    Map<String, dynamic> json;
+    try {
+      json = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      throw const AppException('Event Care returned an invalid response.',
+          code: 'INVALID_RESPONSE');
+    }
     if (response.statusCode < 200 ||
         response.statusCode >= 300 ||
         json['success'] != true) {
       throw AppException(json['message'] as String? ?? 'Unable to load events.',
-          code: 'EVENTS_FAILED');
+          code: response.statusCode == 401
+              ? 'AUTH_REQUIRED'
+              : 'EVENTS_FAILED');
     }
     return json;
   }

@@ -357,7 +357,7 @@ class _HeaderBrand extends StatelessWidget {
           Text('EVENT CARE',
               style: TextStyle(
                   color: AppColors.coral,
-                  fontSize: 9,
+                  fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.1))
         ])
@@ -371,13 +371,13 @@ class _EventIdentity extends StatelessWidget {
   Widget build(BuildContext context) =>
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _Crest(name: event.name),
-        const SizedBox(width: 16),
+        const SizedBox(width: 14),
         Expanded(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(event.name,
               style: const TextStyle(
-                  fontSize: 27, height: 1.05, fontWeight: FontWeight.w800)),
+                  fontSize: 23, height: 1.08, fontWeight: FontWeight.w800)),
           const SizedBox(height: 10),
           Row(children: [
             const Icon(Icons.location_on_outlined,
@@ -406,8 +406,8 @@ class _Crest extends StatelessWidget {
   Widget build(BuildContext context) {
     final initials = name.split(' ').take(3).map((part) => part[0]).join();
     return Container(
-        width: 92,
-        height: 106,
+        width: 70,
+        height: 82,
         decoration: BoxDecoration(
             border: Border.all(color: Colors.white70, width: 2),
             borderRadius: const BorderRadius.vertical(
@@ -417,12 +417,12 @@ class _Crest extends StatelessWidget {
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Text(initials,
               style:
-                  const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+                  const TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
           const SizedBox(height: 6),
           const Text('EVENT CARE',
               style: TextStyle(
                   color: AppColors.coral,
-                  fontSize: 8,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700))
         ]));
   }
@@ -439,6 +439,17 @@ class _ReadinessHero extends StatelessWidget {
         : status == 'warning'
             ? AppColors.warning
             : AppColors.lime;
+    final blocked = status == 'blocked';
+    final title = blocked
+        ? 'EVENT NOT READY'
+        : status == 'warning'
+            ? 'ATTENTION REQUIRED'
+            : 'READY FOR KICKOFF';
+    final icon = blocked
+        ? Icons.cancel
+        : status == 'warning'
+            ? Icons.warning_amber_rounded
+            : Icons.check_circle;
     return Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
@@ -449,62 +460,68 @@ class _ReadinessHero extends StatelessWidget {
             boxShadow: [
               BoxShadow(color: tone.withValues(alpha: .1), blurRadius: 28)
             ]),
-        child: Row(children: [
-          SizedBox(
-              width: 116,
-              height: 116,
-              child: Stack(fit: StackFit.expand, children: [
-                CircularProgressIndicator(
-                    value: (readiness['score'] as num) / 100,
-                    strokeWidth: 10,
-                    strokeCap: StrokeCap.round,
-                    backgroundColor: const Color(0xFF34373C),
-                    color: AppColors.warning),
-                Center(
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text('${readiness['score']}%',
-                      style: const TextStyle(
-                          fontSize: 32, fontWeight: FontWeight.w900)),
-                  const Text('READINESS',
-                      style: TextStyle(color: AppColors.muted, fontSize: 10))
-                ]))
-              ])),
-          const SizedBox(width: 20),
-          Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                        border: Border.all(color: tone),
-                        borderRadius: BorderRadius.circular(999),
-                        color: tone.withValues(alpha: .1)),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.lock_outline, size: 17, color: tone),
-                      const SizedBox(width: 6),
-                      Flexible(
-                          child: Text(status.toUpperCase(),
-                              style: TextStyle(
-                                  color: tone, fontWeight: FontWeight.w800)))
-                    ])),
-                const SizedBox(height: 18),
-                Text(
-                    '${readiness['critical_blockers_count']} critical blockers',
-                    style: const TextStyle(
-                        color: AppColors.danger,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            Icon(icon, color: tone, size: 24),
+            const SizedBox(width: 9),
+            Expanded(
+                child: Text(title,
+                    style: TextStyle(
+                        color: tone,
                         fontSize: 16,
-                        fontWeight: FontWeight.w700)),
-                const SizedBox(height: 10),
-                Text('${readiness['actions_required_count']} actions required',
-                    style: const TextStyle(
-                        color: AppColors.warning,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700))
-              ]))
+                        fontWeight: FontWeight.w900))),
+            Text('${readiness['score']}%',
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+          ]),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: (readiness['score'] as num) / 100,
+              minHeight: 8,
+              backgroundColor: const Color(0xFF34373C),
+              color: tone,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(spacing: 18, runSpacing: 8, children: [
+            _ReadinessFact(
+              icon: Icons.error_outline,
+              value: '${readiness['critical_blockers_count']}',
+              label: 'critical blockers',
+              color: blocked ? AppColors.danger : AppColors.muted,
+            ),
+            _ReadinessFact(
+              icon: Icons.task_alt,
+              value: '${readiness['actions_required_count']}',
+              label: 'actions required',
+              color: status == 'ready' ? AppColors.lime : AppColors.warning,
+            ),
+          ]),
         ]));
   }
+}
+
+class _ReadinessFact extends StatelessWidget {
+  const _ReadinessFact({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 6),
+        Text('$value $label',
+            style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+      ]);
 }
 
 class _LivePriority extends StatelessWidget {
@@ -660,7 +677,12 @@ class _AttentionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final critical = item['status'] == 'blocked' || item['is_critical'] == true;
     final tone = critical ? AppColors.danger : AppColors.warning;
-    return Container(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
         decoration: BoxDecoration(
             color: AppColors.surface,
             border: Border.all(color: AppColors.border),
@@ -693,7 +715,7 @@ class _AttentionCard extends StatelessWidget {
                               child: Text('$index',
                                   style: const TextStyle(
                                       color: Colors.black,
-                                      fontSize: 11,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w800))))
                     ]),
                     const SizedBox(width: 13),
@@ -704,7 +726,7 @@ class _AttentionCard extends StatelessWidget {
                           Text(critical ? 'CRITICAL' : 'WARNING',
                               style: TextStyle(
                                   color: tone,
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w800)),
                           const SizedBox(height: 5),
                           Text(
@@ -721,16 +743,18 @@ class _AttentionCard extends StatelessWidget {
                                   color: AppColors.muted, fontSize: 12))
                         ])),
                     const SizedBox(width: 8),
-                    OutlinedButton(
-                        onPressed: onTap,
-                        style: OutlinedButton.styleFrom(
-                            foregroundColor: tone,
-                            side: BorderSide(color: tone),
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 13)),
-                        child: Text(critical ? 'Resolve' : 'Review'))
+                    Column(mainAxisSize: MainAxisSize.min, children: [
+                      Text(critical ? 'Resolve' : 'Review',
+                          style: TextStyle(
+                              color: tone,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800)),
+                      Icon(Icons.chevron_right, color: tone, size: 20),
+                    ])
                   ])))
-        ])));
+        ]))),
+      ),
+    );
   }
 }
 

@@ -40,7 +40,14 @@ class _EventsPageState extends State<EventsPage> {
                   const SliverFillRemaining(
                       child: Center(child: CircularProgressIndicator()))
                 else if (widget.controller.errorMessage case final error?)
-                  SliverFillRemaining(child: Center(child: Text(error)))
+                  SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _EventsError(
+                          message: error,
+                          sessionExpired: widget.controller.sessionExpired,
+                          retry: widget.controller.load,
+                          signIn: () => Navigator.of(context)
+                              .popUntil((route) => route.isFirst)))
                 else
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
@@ -82,6 +89,56 @@ class _EventsPageState extends State<EventsPage> {
   }
 }
 
+class _EventsError extends StatelessWidget {
+  const _EventsError({
+    required this.message,
+    required this.sessionExpired,
+    required this.retry,
+    required this.signIn,
+  });
+
+  final String message;
+  final bool sessionExpired;
+  final VoidCallback retry;
+  final VoidCallback signIn;
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              border: Border.all(color: AppColors.border),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Icon(sessionExpired ? Icons.lock_clock : Icons.cloud_off,
+                  color: sessionExpired ? AppColors.warning : AppColors.coral,
+                  size: 38),
+              const SizedBox(height: 14),
+              Text(sessionExpired ? 'Sign in required' : 'Events unavailable',
+                  style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 8),
+              Text(message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.muted)),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: sessionExpired ? signIn : retry,
+                  child: Text(sessionExpired ? 'Sign in again' : 'Try again'),
+                ),
+              ),
+            ]),
+          ),
+        ),
+      );
+}
+
 class _Header extends StatelessWidget {
   const _Header({required this.controller, required this.repository});
   final EventsController controller;
@@ -98,7 +155,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 20, 0, 0),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             const ProwemBrand(compact: true, horizontal: true),
@@ -108,12 +165,11 @@ class _Header extends StatelessWidget {
                 onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
                     builder: (_) =>
                         NotificationsPage(repository: repository)))),
-            const SizedBox(width: 16)
           ]),
-          const SizedBox(height: 38),
+          const SizedBox(height: 30),
           const Text('My Events',
               style: TextStyle(
-                  fontSize: 38, height: 1, fontWeight: FontWeight.w800)),
+                  fontSize: 32, height: 1.05, fontWeight: FontWeight.w800)),
           const SizedBox(height: 12),
           const Text('Monitor event readiness and act on what needs attention.',
               style: TextStyle(color: AppColors.muted, fontSize: 15)),
@@ -122,7 +178,6 @@ class _Header extends StatelessWidget {
               height: 50,
               child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.only(right: 16),
                   itemCount: filters.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
                   itemBuilder: (context, index) {
@@ -199,24 +254,22 @@ class _EventCardView extends StatelessWidget {
             color: AppColors.surface,
             border: Border.all(
                 color: event.status == 'live'
-                    ? AppColors.danger
+                    ? AppColors.cyan
                     : AppColors.border),
             borderRadius: BorderRadius.circular(16),
-            boxShadow: event.status == 'live'
-                ? const [BoxShadow(color: Color(0x33FF3B4E), blurRadius: 22)]
-                : const [
-                    BoxShadow(
-                        color: Color(0x59000000),
-                        blurRadius: 24,
-                        offset: Offset(0, 10))
-                  ]),
+            boxShadow: const [
+              BoxShadow(
+                  color: Color(0x40000000),
+                  blurRadius: 18,
+                  offset: Offset(0, 8))
+            ]),
         child: Column(children: [
           Padding(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(16),
               child:
                   Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 _Crest(name: event.name, status: event.status),
-                const SizedBox(width: 18),
+                const SizedBox(width: 14),
                 Expanded(
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,7 +278,7 @@ class _EventCardView extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontSize: 22, fontWeight: FontWeight.w700)),
+                              fontSize: 19, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 8),
                       _Status(status: event.status),
                       const SizedBox(height: 14),
@@ -242,8 +295,12 @@ class _EventCardView extends StatelessWidget {
                         const Icon(Icons.calendar_today_outlined,
                             size: 17, color: AppColors.muted),
                         const SizedBox(width: 8),
-                        Text(_dateRange(event),
-                            style: const TextStyle(color: AppColors.muted))
+                        Expanded(
+                            child: Text(_dateRange(event),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                    const TextStyle(color: AppColors.muted)))
                       ]),
                     ])),
                 const Icon(Icons.chevron_right, color: AppColors.muted),
@@ -380,13 +437,30 @@ class _Status extends StatelessWidget {
   const _Status({required this.status});
   final String status;
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) {
+    final icon = switch (status) {
+      'ready' => Icons.check_circle,
+      'live' => Icons.sensors,
+      'preparing' => Icons.warning_amber_rounded,
+      'completed' => Icons.task_alt,
+      _ => Icons.block,
+    };
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
           border: Border.all(color: _tone(status)),
           borderRadius: BorderRadius.circular(5)),
-      child: Text(status.toUpperCase(),
-          style: TextStyle(color: _tone(status), fontSize: 11)));
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, color: _tone(status), size: 14),
+        const SizedBox(width: 5),
+        Text(status.toUpperCase(),
+            style: TextStyle(
+                color: _tone(status),
+                fontSize: 12,
+                fontWeight: FontWeight.w700)),
+      ]),
+    );
+  }
 }
 
 class _Crest extends StatelessWidget {
@@ -395,25 +469,26 @@ class _Crest extends StatelessWidget {
   final String status;
   @override
   Widget build(BuildContext context) => Container(
-      width: 88,
-      height: 104,
+      width: 68,
+      height: 82,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
           border: Border.all(color: _tone(status), width: 2),
           borderRadius: const BorderRadius.vertical(
               top: Radius.circular(30), bottom: Radius.circular(38))),
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        ...name.toUpperCase().split(' ').take(3).map((word) => Text(word,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-                fontSize: 12, height: 1.05, fontWeight: FontWeight.w800))),
-        const SizedBox(height: 5),
-        const Text('⚽')
+        Text(
+          name.split(' ').take(3).map((word) => word[0]).join(),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 4),
+        Icon(Icons.sports_soccer, size: 16, color: _tone(status))
       ]));
 }
 
 Color _tone(String status) => switch (status) {
-      'live' => AppColors.danger,
+      'live' => AppColors.cyan,
       'preparing' => AppColors.warning,
       'ready' => AppColors.lime,
       _ => AppColors.muted

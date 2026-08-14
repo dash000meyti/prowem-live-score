@@ -26,6 +26,18 @@ abstract final class AppTheme {
           surface: AppColors.surface,
           error: AppColors.danger,
         ),
+        textTheme: const TextTheme(
+          headlineSmall: TextStyle(
+              color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
+          titleLarge: TextStyle(
+              color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+          titleMedium: TextStyle(
+              color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700),
+          bodyLarge: TextStyle(color: Colors.white, fontSize: 16, height: 1.45),
+          bodyMedium: TextStyle(color: Colors.white, fontSize: 15, height: 1.4),
+          bodySmall: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
+          labelLarge: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        ),
         appBarTheme: const AppBarTheme(
           elevation: 0,
           centerTitle: false,
@@ -54,6 +66,12 @@ abstract final class AppTheme {
             shape: const StadiumBorder(),
           ),
         ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            minimumSize: const Size(44, 44),
+            foregroundColor: AppColors.coral,
+          ),
+        ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white,
@@ -63,6 +81,23 @@ abstract final class AppTheme {
         ),
         progressIndicatorTheme:
             const ProgressIndicatorThemeData(color: AppColors.coral),
+        navigationBarTheme: const NavigationBarThemeData(
+          height: 68,
+          backgroundColor: Color(0xF205070A),
+          indicatorColor: Color(0x26FF6B3D),
+          labelTextStyle: WidgetStatePropertyAll(
+            TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+        ),
+        snackBarTheme: const SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Color(0xFF20262F),
+          contentTextStyle: TextStyle(color: Colors.white, fontSize: 14),
+        ),
+        dialogTheme: DialogThemeData(
+          backgroundColor: const Color(0xFF151A22),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
         dividerTheme: const DividerThemeData(color: AppColors.border),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,

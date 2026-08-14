@@ -5,9 +5,15 @@ import 'package:event_care_mobile/features/auth/presentation/controllers/login_c
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('shows the organizer login experience', (tester) async {
+  testWidgets('opens on home and enters the organizer login', (tester) async {
     await tester.pumpWidget(
         EventCareApp(loginController: LoginController(_FakeAuthRepository())));
+
+    expect(find.text('CONTROL EVERY\nMOMENT.'), findsOneWidget);
+    expect(find.text('Enter Event Care'), findsOneWidget);
+
+    await tester.tap(find.text('Enter Event Care'));
+    await tester.pumpAndSettle();
 
     expect(find.text('Use organizer demo account'), findsOneWidget);
     expect(find.text('Sign In'), findsOneWidget);

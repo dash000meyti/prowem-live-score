@@ -290,7 +290,7 @@ class _Chip extends StatelessWidget {
           borderRadius: BorderRadius.circular(999)),
       child: Text(label.replaceAll('_', ' ').toUpperCase(),
           style: TextStyle(
-              color: color, fontSize: 10, fontWeight: FontWeight.w800)));
+              color: color, fontSize: 12, fontWeight: FontWeight.w800)));
 }
 
 class _Fact extends StatelessWidget {

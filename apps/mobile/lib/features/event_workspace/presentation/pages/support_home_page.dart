@@ -38,11 +38,11 @@ class _SupportHomePageState extends State<SupportHomePage> {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: const _SupportBrand(), actions: [
-          OutlinedButton.icon(
+          IconButton(
               onPressed: create,
-              icon: const Icon(Icons.headset_mic_outlined),
-              label: const Text('Contact PROWEM')),
-          const SizedBox(width: 12)
+              tooltip: 'Contact PROWEM',
+              icon: const Icon(Icons.add_comment_outlined)),
+          const SizedBox(width: 6)
         ]),
         body: FutureBuilder<Map<String, dynamic>>(
             future: loader,
@@ -158,7 +158,7 @@ class _SupportBrand extends StatelessWidget {
               style: TextStyle(
                   color: AppColors.coral,
                   fontWeight: FontWeight.w700,
-                  fontSize: 9,
+                  fontSize: 11,
                   letterSpacing: 1.1))
         ])
       ]);
@@ -190,7 +190,7 @@ class _CriticalTicket extends StatelessWidget {
               child: Text('CRITICAL SUPPORT ACTIVE',
                   style: TextStyle(
                       color: AppColors.danger,
-                      fontSize: 20,
+                      fontSize: 16,
                       fontWeight: FontWeight.w900))),
           Container(
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
@@ -199,7 +199,7 @@ class _CriticalTicket extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10)),
               child: Text('${ticket['priority']}'.toUpperCase(),
                   style: const TextStyle(
-                      fontSize: 23, fontWeight: FontWeight.w900)))
+                      fontSize: 17, fontWeight: FontWeight.w900)))
         ]),
         const SizedBox(height: 18),
         const Divider(),
@@ -346,35 +346,25 @@ class _TicketRow extends StatelessWidget {
                             ticket['description'] as String,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppColors.muted))
+                        style: const TextStyle(color: AppColors.muted)),
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      Icon(resolved ? Icons.check_circle : Icons.circle,
+                          color: tone, size: 13),
+                      const SizedBox(width: 5),
+                      Expanded(
+                          child: Text(
+                              '${resolved ? 'Resolved' : '${ticket['status']}'.replaceAll('_', ' ')}  •  ${_age(resolved ? ticket['resolved_at'] as String? : ticket['updated_at'] as String?)}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  color: tone,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700)))
+                    ])
                   ])),
               const SizedBox(width: 8),
-              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                        border: Border.all(color: tone),
-                        borderRadius: BorderRadius.circular(999)),
-                    child: Text(
-                        resolved
-                            ? 'RESOLVED'
-                            : '${ticket['status']}'
-                                .replaceAll('_', ' ')
-                                .toUpperCase(),
-                        style: TextStyle(
-                            color: tone,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800))),
-                const SizedBox(height: 8),
-                Text(
-                    _age(resolved
-                        ? ticket['resolved_at'] as String?
-                        : ticket['updated_at'] as String?),
-                    style:
-                        const TextStyle(color: AppColors.muted, fontSize: 11))
-              ]),
-              const SizedBox(width: 4),
+              const SizedBox(width: 8),
               const Icon(Icons.chevron_right, color: AppColors.muted)
             ])));
   }
@@ -432,7 +422,7 @@ class _NavIcon extends StatelessWidget {
             Text(label,
                 style: TextStyle(
                     color: active ? AppColors.coral : AppColors.muted,
-                    fontSize: 11))
+                    fontSize: 12))
           ])));
 }
 

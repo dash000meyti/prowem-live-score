@@ -6,7 +6,13 @@ async function proxy(
   context: { params: Promise<{ path: string[] }> },
 ) {
   const { path } = await context.params;
-  const token = request.cookies.get(AUTH_COOKIE)?.value;
+  const incomingAuthorization = request.headers.get("authorization");
+  const cookieToken = request.cookies.get(AUTH_COOKIE)?.value;
+  const authorization = incomingAuthorization?.startsWith("Bearer ")
+    ? incomingAuthorization
+    : cookieToken
+      ? `Bearer ${cookieToken}`
+      : null;
   const target = `${API_INTERNAL_URL}/api/v1/${path.join("/")}${request.nextUrl.search}`;
   const headers = new Headers();
   const contentType = request.headers.get("content-type");
@@ -14,15 +20,27 @@ async function proxy(
     headers.set("content-type", contentType);
   }
   headers.set("accept", request.headers.get("accept") ?? "application/json");
-  if (token) {
-    headers.set("authorization", `Bearer ${token}`);
+  if (authorization) {
+    headers.set("authorization", authorization);
   }
 
   const method = request.method;
   const body =
     method === "GET" || method === "HEAD" ? undefined : await request.arrayBuffer();
 
-  const upstream = await fetch(target, { method, headers, body });
+  let upstream: Response;
+  try {
+    upstream = await fetch(target, { method, headers, body, cache: "no-store" });
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Event Care is temporarily unavailable.",
+        error: { code: "API_UNAVAILABLE", details: null },
+      },
+      { status: 502 },
+    );
+  }
   const responseHeaders = new Headers();
   const upstreamType = upstream.headers.get("content-type");
   if (upstreamType) {

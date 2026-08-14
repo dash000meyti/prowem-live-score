@@ -108,21 +108,18 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Row(children: [
-                                          Expanded(
-                                              child: Text(
-                                                  ticket['reference'] as String,
-                                                  style: const TextStyle(
-                                                      color: AppColors.coral,
-                                                      fontWeight:
-                                                          FontWeight.w800))),
+                                        Text(ticket['reference'] as String,
+                                            style: const TextStyle(
+                                                color: AppColors.coral,
+                                                fontWeight: FontWeight.w800)),
+                                        const SizedBox(height: 9),
+                                        Wrap(spacing: 6, runSpacing: 6, children: [
                                           _Pill(
                                               '${ticket['priority']}'
                                                   .toUpperCase(),
                                               ticket['priority'] == 'p1'
                                                   ? AppColors.danger
                                                   : AppColors.warning),
-                                          const SizedBox(width: 6),
                                           _Pill(
                                               '${ticket['status']}'
                                                   .replaceAll('_', ' ')
@@ -273,5 +270,5 @@ class _Pill extends StatelessWidget {
           borderRadius: BorderRadius.circular(999)),
       child: Text(label,
           style: TextStyle(
-              color: color, fontSize: 9, fontWeight: FontWeight.w800)));
+              color: color, fontSize: 12, fontWeight: FontWeight.w800)));
 }

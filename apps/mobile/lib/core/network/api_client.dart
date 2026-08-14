@@ -65,7 +65,9 @@ class ApiClient {
         json['success'] != true) {
       final error = json['error'] as Map<String, dynamic>?;
       throw AppException(json['message'] as String? ?? 'Request failed.',
-          code: error?['code'] as String? ?? 'REQUEST_FAILED');
+          code: response.statusCode == 401
+              ? 'AUTH_REQUIRED'
+              : error?['code'] as String? ?? 'REQUEST_FAILED');
     }
     return json;
   }

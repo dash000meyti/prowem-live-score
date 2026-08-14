@@ -58,12 +58,22 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final backgroundCacheWidth = (media.size.width * media.devicePixelRatio)
+        .round()
+        .clamp(720, 1440)
+        .toInt();
+
+    return Scaffold(
         body: Stack(
           fit: StackFit.expand,
           children: [
             Image.asset('assets/images/event-care-stadium.png',
-                fit: BoxFit.cover, alignment: Alignment.topCenter),
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+                cacheWidth: backgroundCacheWidth,
+                filterQuality: FilterQuality.low),
             const DecoratedBox(
                 decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -83,17 +93,18 @@ class _LoginPageState extends State<LoginPage> {
               child: LayoutBuilder(builder: (context, constraints) {
                 final compact = constraints.maxHeight < 720;
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 28, 16, 24),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: EdgeInsets.fromLTRB(
+                      16, compact ? 18 : 30, 16, compact ? 18 : 24),
                   child: ConstrainedBox(
                     constraints:
-                        BoxConstraints(minHeight: constraints.maxHeight - 52),
+                        BoxConstraints(minHeight: constraints.maxHeight -
+                            (compact ? 36 : 54)),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        SizedBox(
-                            height: compact ? 235 : 330,
-                            child:
-                                Center(child: ProwemBrand(compact: compact))),
+                        ProwemBrand(compact: compact),
+                        SizedBox(height: compact ? 22 : 34),
                         _LoginCard(
                             controller: widget.controller,
                             formKey: _formKey,
@@ -113,6 +124,7 @@ class _LoginPageState extends State<LoginPage> {
           ],
         ),
       );
+  }
 }
 
 class _LoginCard extends StatelessWidget {
@@ -138,7 +150,7 @@ class _LoginCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         width: 560,
-        padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
         decoration: BoxDecoration(
           color: AppColors.surface,
           border: Border.all(color: AppColors.border),
@@ -169,7 +181,7 @@ class _LoginCard extends StatelessWidget {
                     validator: (value) => value == null || !value.contains('@')
                         ? 'Enter a valid email.'
                         : null),
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
                 const Text('Password',
                     style:
                         TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
@@ -190,7 +202,7 @@ class _LoginCard extends StatelessWidget {
                         ? 'Enter your password.'
                         : null,
                     onFieldSubmitted: (_) => onSubmit()),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
                 TextButton(
                   onPressed: onDemo,
                   child: const Text('Use organizer demo account'),
@@ -219,7 +231,7 @@ class _LoginCard extends StatelessWidget {
                         ]),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 const Row(children: [
                   Expanded(child: Divider(color: Color(0x337D8790))),
                   Padding(

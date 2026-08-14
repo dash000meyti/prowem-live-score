@@ -12,23 +12,28 @@ class ProwemBrand extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment:
+          horizontal ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       children: [
         Text('PROWEM',
             style: TextStyle(
-                fontSize: compact ? 38 : 52,
+                fontSize: horizontal ? (compact ? 24 : 32) : (compact ? 38 : 52),
                 height: .8,
                 fontWeight: FontWeight.w800,
-                letterSpacing: 3)),
-        const SizedBox(height: 12),
+                letterSpacing: horizontal ? 1.8 : 3)),
+        SizedBox(height: horizontal ? 7 : 12),
         Text('Event Care',
             style: TextStyle(
                 color: AppColors.coral,
-                fontSize: compact ? 20 : 27,
+                fontSize: horizontal ? (compact ? 14 : 18) : (compact ? 20 : 27),
                 letterSpacing: 1)),
       ],
     );
     final mark = CustomPaint(
-        size: Size(compact ? 62 : 90, compact ? 44 : 64),
+        size: Size(
+          horizontal ? (compact ? 46 : 62) : (compact ? 62 : 90),
+          horizontal ? (compact ? 34 : 46) : (compact ? 44 : 64),
+        ),
         painter: _ProwemMarkPainter());
     if (horizontal) {
       return Row(

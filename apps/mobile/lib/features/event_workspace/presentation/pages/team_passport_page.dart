@@ -215,7 +215,7 @@ class _TeamPassportPageState extends State<TeamPassportPage> {
                                 Text(status.toUpperCase(),
                                     style: TextStyle(
                                         color: _tone(status),
-                                        fontSize: 11,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.w800)),
                               ]),
                         ),
