@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { CheckCircle2 } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 import { ButtonLink } from "@/shared/ui/button";
 import { GlassCard } from "@/shared/ui/card";
@@ -32,15 +33,17 @@ export function LandingHero({
 
       <div className="relative mx-auto grid min-h-svh max-w-7xl items-center gap-8 px-4 pb-14 pt-10 sm:gap-10 sm:px-6 sm:pb-16 sm:pt-14 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="order-2 text-center lg:order-1 lg:text-left">
+          <p>
+          PROWEM Event Guardian
+          </p>
           <h1 className="font-display text-[2.6rem] font-bold leading-[0.95] tracking-wide text-white sm:text-6xl md:text-7xl">
-          YOUR EVENT
+          verything at Your
             <br />
             <span className="text-prowem-accent text-glow-green">
-            IS OUR EVENT.</span>
+            Command</span>
           </h1>
           <p className="mx-auto mt-5 max-w-lg text-sm leading-relaxed text-white/70 sm:mt-6 md:text-base lg:mx-0">
-            Event Care keeps football tournaments ready, supported and reported — from
-            first checklist to final whistle.
+          An integrated system for preparing, managing, and improving sports events.
           </p>
 
           <div className="mt-6 grid grid-cols-2 justify-items-center gap-2 sm:mt-8 sm:flex sm:flex-wrap sm:justify-center sm:gap-3 lg:justify-start">
@@ -67,10 +70,10 @@ export function LandingHero({
 
           <div className="mt-6 flex flex-col items-center gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4 lg:justify-start">
             <ButtonLink href={enterHref} variant="accent" className="w-full sm:w-auto">
-              {signedIn ? "Go to dashboard" : "Explore Event Care"}
+              {signedIn ? "Go to dashboard" : "Take Control"}
             </ButtonLink>
-            <ButtonLink href="/login" variant="ghost" className="w-full sm:w-auto">
-              Sign in
+            <ButtonLink href="/how-it-works" variant="ghost" className="w-full sm:w-auto">
+              How It Works
             </ButtonLink>
           </div>
         </div>
@@ -86,25 +89,33 @@ export function LandingHero({
             unoptimized
             className="relative z-0 mx-auto h-auto w-full max-w-[168px] bg-transparent sm:max-w-[200px] lg:max-w-xs"
           />
-          <GlassCard glow="green" className="absolute left-0 top-6 z-10 w-36 animate-float p-2 sm:left-2 sm:top-10 sm:w-44 lg:w-56 lg:p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-prowem-accent">
-              Live Event
+          <GlassCard glow="green" className="absolute left-0 top-4 z-10 w-32 animate-float p-2 sm:left-2 sm:top-8 sm:w-40 lg:w-44 lg:p-3">
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-prowem-accent sm:text-xs">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+              Ready
             </p>
-            <p className="mt-1 text-sm font-semibold">Vienna Youth Cup</p>
-            <p className="mt-1 text-xs text-prowem-muted">Pitch A · Semi Final</p>
+            <p className="mt-1 text-xs text-white/80">Kickoff cleared</p>
           </GlassCard>
-          <GlassCard glow="orange" className="absolute right-0 top-20 z-10 w-36 animate-float-delayed p-2 sm:top-28 sm:w-44 lg:w-56 lg:p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-prowem-orange">
-              Reporting Kit
+          <GlassCard glow="cyan" className="absolute right-0 top-16 z-10 w-32 animate-float-delayed p-2 sm:top-24 sm:w-40 lg:w-44 lg:p-3">
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-prowem-cyan sm:text-xs">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+              All Clear
             </p>
-            <p className="mt-1 text-sm font-semibold">Tournament overview</p>
-            <p className="mt-1 text-xs text-prowem-muted">Data after the final whistle</p>
+            <p className="mt-1 text-xs text-white/80">No blockers live</p>
           </GlassCard>
-          <GlassCard glow="cyan" className="absolute bottom-4 left-1 z-10 w-40 animate-float p-2 sm:bottom-16 sm:left-4 sm:w-52 lg:w-60 lg:p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-prowem-cyan">
-              Readiness
+          <GlassCard glow="green" className="absolute bottom-10 left-0 z-10 w-36 animate-float p-2 sm:bottom-20 sm:left-2 sm:w-44 lg:w-48 lg:p-3">
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-prowem-accent sm:text-xs">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+              Issue Resolved
             </p>
-            <p className="mt-1 text-sm font-semibold">7 ready · 1 warning · 1 blocked</p>
+            <p className="mt-1 text-xs text-white/80">Back on the pitch</p>
+          </GlassCard>
+          <GlassCard glow="cyan" className="absolute bottom-2 right-0 z-10 w-36 animate-float-delayed p-2 sm:bottom-8 sm:w-44 lg:w-48 lg:p-3">
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-prowem-cyan sm:text-xs">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+              Event Report
+            </p>
+            <p className="mt-1 text-xs text-white/80">After the whistle</p>
           </GlassCard>
         </div>
       </div>

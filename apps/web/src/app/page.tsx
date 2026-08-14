@@ -70,6 +70,12 @@ export default async function LandingPage() {
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
+              href="/how-it-works"
+              className="hidden text-sm text-prowem-muted hover:text-white sm:inline"
+            >
+              How it works
+            </Link>
+            <Link
               href={enterHref}
               className="hidden text-sm text-prowem-muted hover:text-white sm:inline"
             >
