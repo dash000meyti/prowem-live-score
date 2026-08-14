@@ -25,6 +25,7 @@ export function LandingHero({
         alt=""
         fill
         priority
+        sizes="100vw"
         className="object-cover object-center opacity-40"
       />
       <div className="absolute inset-0 bg-linear-to-r from-black/80 via-black/55 to-black/45" />
@@ -33,14 +34,13 @@ export function LandingHero({
 
       <div className="relative mx-auto grid min-h-svh max-w-7xl items-center gap-8 px-4 pb-14 pt-10 sm:gap-10 sm:px-6 sm:pb-16 sm:pt-14 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="order-2 text-center lg:order-1 lg:text-left">
-          <p>
-          PROWEM Event Guardian
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-prowem-accent sm:text-xs">
+            PROWEM Event Guardian
           </p>
           <h1 className="font-display text-[2.6rem] font-bold leading-[0.95] tracking-wide text-white sm:text-6xl md:text-7xl">
-          verything at Your
+            Everything at Your
             <br />
-            <span className="text-prowem-accent text-glow-green">
-            Command</span>
+            <span className="text-prowem-accent text-glow-green">Command</span>
           </h1>
           <p className="mx-auto mt-5 max-w-lg text-sm leading-relaxed text-white/70 sm:mt-6 md:text-base lg:mx-0">
           An integrated system for preparing, managing, and improving sports events.

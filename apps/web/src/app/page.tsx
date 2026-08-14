@@ -43,6 +43,17 @@ export default async function LandingPage() {
       <OutcomesSection />
       <HowItWorksCta />
 
+      <section className="relative mx-auto max-w-7xl px-4 pb-16 text-center sm:px-6 sm:pb-20 lg:px-10">
+        <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+          <ButtonLink href={enterHref} variant="accent" className="w-full sm:w-auto">
+            {user ? "Go to dashboard" : "Take Control"}
+          </ButtonLink>
+          <ButtonLink href="/how-it-works" variant="ghost" className="w-full sm:w-auto">
+            How It Works
+          </ButtonLink>
+        </div>
+      </section>
+
       <footer className="border-t border-white/10 px-4 py-8 text-center sm:px-6">
         <p>
           <Link
