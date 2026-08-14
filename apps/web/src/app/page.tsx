@@ -11,6 +11,7 @@ import {
 import { getSessionUser } from "@/shared/api/server";
 import { ButtonLink } from "@/shared/ui/button";
 import { GlassCard } from "@/shared/ui/card";
+import { LandingHero } from "@/features/marketing/hero";
 
 const beforeDuringAfter = [
   {
@@ -62,49 +63,26 @@ export default async function LandingPage() {
 
   return (
     <div className="relative overflow-hidden">
-      <header className="mx-auto flex max-w-[1440px] items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-10 lg:py-5">
-        <Link href="/" className="font-display text-lg font-bold tracking-wide sm:text-xl">
-          PROWEM <span className="text-prowem-coral">Event Care</span>
-        </Link>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Link
-            href={enterHref}
-            className="hidden text-sm text-prowem-muted hover:text-white sm:inline"
-          >
-            {user ? "Dashboard" : "Login"}
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-black/70 backdrop-blur-xl supports-backdrop-filter:bg-black/55">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:px-10">
+          <Link href="/" className="font-display text-lg font-bold tracking-wide sm:text-xl">
+            PROWEM <span className="text-prowem-coral">Event Care</span>
           </Link>
-          <ButtonLink href={enterHref} className="px-4 py-2 text-xs sm:px-5 sm:text-sm">
-            {user ? "Open dashboard" : "Enter Event Care"}
-          </ButtonLink>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href={enterHref}
+              className="hidden text-sm text-prowem-muted hover:text-white sm:inline"
+            >
+              {user ? "Dashboard" : "Login"}
+            </Link>
+            <ButtonLink href={enterHref} className="px-4 py-2 text-xs sm:px-5 sm:text-sm">
+              {user ? "Open dashboard" : "Enter Event Care"}
+            </ButtonLink>
+          </div>
         </div>
       </header>
 
-      <section className="relative mx-auto max-w-[1440px] px-4 pb-16 pt-10 text-center sm:px-6 sm:pb-24 sm:pt-16 lg:px-10 lg:pb-32 lg:pt-24">
-        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-[1.25rem] sm:rounded-[2rem]">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#05070a] via-[#05070a]/70 to-[#05070a]" />
-          <div className="absolute left-[-10%] top-10 h-72 w-72 rounded-full bg-prowem-orange/20 blur-[100px]" />
-          <div className="absolute bottom-0 right-[-5%] h-80 w-80 rounded-full bg-prowem-purple/15 blur-[120px]" />
-          <div className="absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-prowem-cyan/10 blur-[90px]" />
-        </div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-prowem-coral sm:text-xs">
-          Software + Service + Confidence
-        </p>
-        <h1 className="mx-auto mt-4 max-w-5xl font-display text-[2.35rem] font-bold uppercase leading-[0.95] tracking-wide sm:mt-5 sm:text-5xl md:text-7xl">
-          Your Event Is Our Event.
-        </h1>
-        <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-white/80 sm:mt-6 sm:text-base md:text-lg">
-          Event Care keeps football tournaments ready, supported and reported — from
-          first checklist to final whistle.
-        </p>
-        <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:mt-10 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-          <ButtonLink href={enterHref} className="w-full sm:w-auto">
-            {user ? "Go to dashboard" : "Explore Event Care"}
-          </ButtonLink>
-          <ButtonLink href="/login" variant="ghost" className="w-full sm:w-auto">
-            Sign in
-          </ButtonLink>
-        </div>
-      </section>
+      <LandingHero enterHref={enterHref} signedIn={Boolean(user)} />
 
       <section className="mx-auto max-w-[1440px] px-4 py-14 sm:px-6 sm:py-20 lg:px-10">
         <p className="text-center text-xs font-bold uppercase tracking-[0.25em] text-prowem-coral">

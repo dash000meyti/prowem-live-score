@@ -4,10 +4,11 @@ import { cn } from "@/shared/lib/cn";
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-type ButtonVariant = "primary" | "ghost" | "danger" | "secondary" | "subtle";
+type ButtonVariant = "primary" | "accent" | "ghost" | "danger" | "secondary" | "subtle";
 
 const variants: Record<ButtonVariant, string> = {
   primary: "btn-primary-glow",
+  accent: "btn-accent-glow",
   ghost: "btn-ghost-glass",
   secondary: "btn-ghost-glass",
   danger:

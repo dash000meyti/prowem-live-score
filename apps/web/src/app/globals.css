@@ -174,6 +174,37 @@ body {
   border-color: rgba(255, 255, 255, 0.22);
 }
 
+.btn-accent-glow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--prowem-accent);
+  color: #05070a;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  box-shadow: var(--shadow-glow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.btn-accent-glow:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: 0 0 32px rgba(57, 255, 106, 0.5);
+}
+
+.text-glow-green {
+  text-shadow: 0 0 24px rgba(57, 255, 106, 0.45);
+}
+
+.neon-border-green {
+  border: 1px solid rgba(57, 255, 106, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(57, 255, 106, 0.15) inset,
+    0 0 18px rgba(57, 255, 106, 0.25);
+}
+
 .focus-ring:focus-visible {
   outline: 2px solid var(--prowem-coral);
   outline-offset: 2px;
@@ -196,6 +227,14 @@ body {
 
 .animate-pulse-glow {
   animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float 6s ease-in-out 1s infinite;
 }
 
 .animate-live-pulse {
