@@ -9,10 +9,10 @@ void main() {
     await tester.pumpWidget(
         EventCareApp(loginController: LoginController(_FakeAuthRepository())));
 
-    expect(find.text('CONTROL EVERY\nMOMENT.'), findsOneWidget);
-    expect(find.text('Enter Event Care'), findsOneWidget);
+    expect(find.text('Everything at Your\nCommand'), findsOneWidget);
+    expect(find.text('Take Control'), findsOneWidget);
 
-    await tester.tap(find.text('Enter Event Care'));
+    await tester.tap(find.text('Take Control').first);
     await tester.pumpAndSettle();
 
     expect(find.text('Use organizer demo account'), findsOneWidget);

@@ -11,11 +11,11 @@ export default async function LoginPage() {
     <main className="login-screen">
       <Image
         className="login-screen__image"
-        src="/images/event-care-stadium.png"
+        src="/images/event-care-stadium.jpg"
         alt=""
         fill
         priority
-        quality={58}
+        unoptimized
         sizes="100vw"
       />
       <div className="login-screen__shade" />

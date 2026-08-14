@@ -66,64 +66,64 @@ class _LoginPageState extends State<LoginPage> {
         .toInt();
 
     return Scaffold(
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
             Image.asset('assets/images/event-care-stadium.png',
-                fit: BoxFit.cover,
+                fit: BoxFit.fitWidth,
                 alignment: Alignment.topCenter,
-                cacheWidth: backgroundCacheWidth,
-                filterQuality: FilterQuality.low),
-            const DecoratedBox(
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                  Color(0x16000000),
-                  Color(0x59000000),
-                  AppColors.background
-                ],
-                        stops: [
-                  0,
-                  .45,
-                  .82
-                ]))),
-            SafeArea(
-              child: LayoutBuilder(builder: (context, constraints) {
-                final compact = constraints.maxHeight < 720;
-                return SingleChildScrollView(
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  padding: EdgeInsets.fromLTRB(
-                      16, compact ? 18 : 30, 16, compact ? 18 : 24),
-                  child: ConstrainedBox(
-                    constraints:
-                        BoxConstraints(minHeight: constraints.maxHeight -
-                            (compact ? 36 : 54)),
-                    child: Column(
-                      children: [
-                        ProwemBrand(compact: compact),
-                        SizedBox(height: compact ? 22 : 34),
-                        _LoginCard(
-                            controller: widget.controller,
-                            formKey: _formKey,
-                            email: _email,
-                            password: _password,
-                            showPassword: _showPassword,
-                            onTogglePassword: () =>
-                                setState(() => _showPassword = !_showPassword),
-                            onDemo: _useDemoAccount,
-                            onSubmit: _submit),
-                      ],
-                    ),
+              cacheWidth: backgroundCacheWidth,
+              filterQuality: FilterQuality.low),
+          const DecoratedBox(
+              decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                Color(0x16000000),
+                Color(0x59000000),
+                AppColors.background
+              ],
+                      stops: [
+                0,
+                .45,
+                .82
+              ]))),
+          SafeArea(
+            child: LayoutBuilder(builder: (context, constraints) {
+              final compact =
+                  constraints.maxWidth < 480 || constraints.maxHeight < 800;
+              return SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: EdgeInsets.fromLTRB(
+                    16, compact ? 18 : 30, 16, compact ? 18 : 24),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight - (compact ? 36 : 54)),
+                  child: Column(
+                    children: [
+                      const ProwemBrand(compact: true, horizontal: true),
+                      SizedBox(height: compact ? 24 : 32),
+                      _LoginCard(
+                          controller: widget.controller,
+                          formKey: _formKey,
+                          email: _email,
+                          password: _password,
+                          showPassword: _showPassword,
+                          onTogglePassword: () =>
+                              setState(() => _showPassword = !_showPassword),
+                          onDemo: _useDemoAccount,
+                          onSubmit: _submit),
+                    ],
                   ),
-                );
-              }),
-            ),
-          ],
-        ),
-      );
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -149,8 +149,8 @@ class _LoginCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 560,
-        padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+        width: 460,
+        padding: const EdgeInsets.fromLTRB(18, 20, 18, 16),
         decoration: BoxDecoration(
           color: AppColors.surface,
           border: Border.all(color: AppColors.border),
@@ -169,28 +169,34 @@ class _LoginCard extends StatelessWidget {
               children: [
                 const Text('Email',
                     style:
-                        TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 12),
+                        TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
                 TextFormField(
                     controller: email,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
                     decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         prefixIcon: Icon(Icons.mail_outline),
                         hintText: 'Enter your email'),
                     validator: (value) => value == null || !value.contains('@')
                         ? 'Enter a valid email.'
                         : null),
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
                 const Text('Password',
                     style:
-                        TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 12),
+                        TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
                 TextFormField(
                     controller: password,
                     obscureText: !showPassword,
                     autofillHints: const [AutofillHints.password],
                     decoration: InputDecoration(
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 16),
                         prefixIcon: const Icon(Icons.lock_outline),
                         hintText: 'Enter your password',
                         suffixIcon: IconButton(
@@ -202,7 +208,7 @@ class _LoginCard extends StatelessWidget {
                         ? 'Enter your password.'
                         : null,
                     onFieldSubmitted: (_) => onSubmit()),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 TextButton(
                   onPressed: onDemo,
                   child: const Text('Use organizer demo account'),
@@ -213,7 +219,7 @@ class _LoginCard extends StatelessWidget {
                   const SizedBox(height: 12),
                 ],
                 SizedBox(
-                  height: 58,
+                  height: 54,
                   child: FilledButton(
                     onPressed: controller.isLoading ? null : onSubmit,
                     style: FilledButton.styleFrom(
@@ -225,13 +231,13 @@ class _LoginCard extends StatelessWidget {
                         children: [
                           Text(controller.isLoading ? 'Signing in…' : 'Sign In',
                               style: const TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.w700)),
+                                  fontSize: 16, fontWeight: FontWeight.w800)),
                           const Spacer(),
                           const Icon(Icons.arrow_forward)
                         ]),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 const Row(children: [
                   Expanded(child: Divider(color: Color(0x337D8790))),
                   Padding(
