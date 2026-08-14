@@ -1,7 +1,20 @@
 import '../../domain/entities/event_card.dart';
 
 class EventCardModel extends EventCard {
-  const EventCardModel({required super.id, required super.reference, required super.name, required super.status, required super.startsAt, required super.endsAt, required super.venue, required super.readinessScore, required super.readinessStatus, required super.criticalBlockers, required super.openIncidents, required super.criticalIncidents, required super.openTickets});
+  const EventCardModel(
+      {required super.id,
+      required super.reference,
+      required super.name,
+      required super.status,
+      required super.startsAt,
+      required super.endsAt,
+      required super.venue,
+      required super.readinessScore,
+      required super.readinessStatus,
+      required super.criticalBlockers,
+      required super.openIncidents,
+      required super.criticalIncidents,
+      required super.openTickets});
 
   factory EventCardModel.fromJson(Map<String, dynamic> json) {
     final readiness = json['readiness'] as Map<String, dynamic>;

@@ -11,23 +11,43 @@ class ProwemBrand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('PROWEM',
+            style: TextStyle(
+                fontSize: compact ? 38 : 52,
+                height: .8,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 3)),
+        const SizedBox(height: 12),
+        Text('Event Care',
+            style: TextStyle(
+                color: AppColors.coral,
+                fontSize: compact ? 20 : 27,
+                letterSpacing: 1)),
+      ],
+    );
+    final mark = CustomPaint(
+        size: Size(compact ? 62 : 90, compact ? 44 : 64),
+        painter: _ProwemMarkPainter());
+    if (horizontal) {
+      return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [mark, const SizedBox(width: 12), label]);
+    }
+    return Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('PROWEM', style: TextStyle(fontSize: compact ? 38 : 52, height: .8, fontWeight: FontWeight.w800, letterSpacing: 3)),
-          const SizedBox(height: 12),
-          Text('Event Care', style: TextStyle(color: AppColors.coral, fontSize: compact ? 20 : 27, letterSpacing: 1)),
-        ],
-      );
-    final mark = CustomPaint(size: Size(compact ? 62 : 90, compact ? 44 : 64), painter: _ProwemMarkPainter());
-    if (horizontal) return Row(mainAxisSize: MainAxisSize.min, children: [mark, const SizedBox(width: 12), label]);
-    return Column(mainAxisSize: MainAxisSize.min, children: [mark, SizedBox(height: compact ? 10 : 18), label]);
+        children: [mark, SizedBox(height: compact ? 10 : 18), label]);
   }
 }
 
 class _ProwemMarkPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..shader = const LinearGradient(colors: [Color(0xFFFF8A3D), AppColors.coralDeep]).createShader(Offset.zero & size);
+    final paint = Paint()
+      ..shader =
+          const LinearGradient(colors: [Color(0xFFFF8A3D), AppColors.coralDeep])
+              .createShader(Offset.zero & size);
     final top = Path()
       ..moveTo(size.width * .18, 0)
       ..lineTo(size.width, 0)

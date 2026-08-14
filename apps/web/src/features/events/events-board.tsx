@@ -4,9 +4,10 @@ import { apiGet, apiGetPaginated } from "@/shared/api/browser";
 import type { EventCard, EventStatus, EventSummary } from "@/shared/api/types";
 import { ErrorBanner } from "@/shared/ui/error-banner";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowRight, Ban, CalendarDays, Check, ChevronRight, MapPin, Search, SlidersHorizontal } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, CalendarDays, Check, ChevronRight, MapPin, Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useSession } from "@/shared/auth/session-context";
 
 type Filter = "all" | "needs_attention" | EventStatus;
 
@@ -15,6 +16,7 @@ const filters: { key: Filter; label: string }[] = [
   { key: "needs_attention", label: "Needs Attention" },
   { key: "preparing", label: "Preparing" },
   { key: "ready", label: "Ready" },
+  { key: "live", label: "Live" },
   { key: "completed", label: "Completed" },
   { key: "cancelled", label: "Cancelled" },
 ];
@@ -22,6 +24,8 @@ const filters: { key: Filter; label: string }[] = [
 const groupOrder: EventStatus[] = ["live", "preparing", "ready", "completed", "cancelled"];
 
 export function EventsBoard() {
+  const user = useSession();
+  const supportUser = user.role !== "organizer";
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
   const params = new URLSearchParams({ per_page: "100", sort: "starts_at", direction: "asc" });
@@ -31,15 +35,23 @@ export function EventsBoard() {
 
   const events = useQuery({ queryKey: ["events", filter, search], queryFn: () => apiGetPaginated<EventCard>(`/events?${params}`) });
   const summary = useQuery({ queryKey: ["events-summary"], queryFn: () => apiGet<EventSummary>("/events/summary") });
-  const grouped = useMemo(() => groupOrder.map((status) => ({ status, items: (events.data?.data ?? []).filter((event) => event.status === status) })).filter((group) => group.items.length), [events.data]);
+  const grouped = useMemo(() => groupOrder.map((status) => {
+    const items = (events.data?.data ?? []).filter((event) => event.status === status);
+    if (supportUser) {
+      items.sort((left, right) =>
+        right.critical_incidents_count - left.critical_incidents_count ||
+        right.open_tickets_count - left.open_tickets_count,
+      );
+    }
+    return { status, items };
+  }).filter((group) => group.items.length), [events.data, supportUser]);
 
   return (
     <div className="events-page">
       <header className="events-heading">
-        <div><h1>My Events</h1><p>Monitor event readiness and act on what needs attention.</p></div>
+        <div><h1>{supportUser ? "Technical Support Queue" : "My Events"}</h1><p>{supportUser ? "Critical customer issues, SLA context and recent resolutions." : "Monitor event readiness and act on what needs attention."}</p></div>
         <div className="events-tools">
           <label><Search aria-hidden="true" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search events…" /></label>
-          <button type="button" className="events-filter-button" aria-label="Filter events"><SlidersHorizontal /></button>
         </div>
       </header>
 
@@ -55,7 +67,7 @@ export function EventsBoard() {
         {grouped.map((group) => (
           <section key={group.status} className={`event-group event-group--${group.status}`}>
             <h2>{group.status === "preparing" ? "Upcoming" : group.status}</h2>
-            <div className="event-group__list">{group.items.map((event) => <EventRow key={event.id} event={event} />)}</div>
+            <div className="event-group__list">{group.items.map((event) => <EventRow key={event.id} event={event} supportUser={supportUser} />)}</div>
           </section>
         ))}
       </div>
@@ -63,10 +75,28 @@ export function EventsBoard() {
   );
 }
 
-function EventRow({ event }: { event: EventCard }) {
+function EventRow({ event, supportUser }: { event: EventCard; supportUser: boolean }) {
   const date = `${formatDate(event.starts_at)} – ${formatDate(event.ends_at)}`;
   const issueCount = event.open_incidents_count + event.open_tickets_count;
   const tone = event.status === "live" ? "red" : event.status === "preparing" ? "amber" : event.status === "ready" ? "green" : "neutral";
+  const primaryHref = supportUser
+    ? event.open_tickets_count > 0
+      ? `/events/${event.id}/tickets`
+      : `/events/${event.id}/incidents`
+    : event.status === "completed"
+      ? `/events/${event.id}/report`
+      : `/events/${event.id}`;
+  const primaryLabel = supportUser
+    ? event.open_tickets_count > 0
+      ? "Open support"
+      : "Review context"
+    : event.status === "live"
+      ? "Open issues"
+      : event.status === "preparing"
+        ? "Continue prep"
+        : event.status === "completed"
+          ? "View report"
+          : "View details";
 
   return (
     <article className={`event-row event-row--${tone}`}>
@@ -86,7 +116,7 @@ function EventRow({ event }: { event: EventCard }) {
         {event.status === "cancelled" ? <><span className="event-state-icon"><Ban /></span><div className="event-message"><strong>Event cancelled</strong><span>No further actions required.</span></div></> : null}
       </div>
       <div className="event-actions">
-        <Link href={`/events/${event.id}`} className="event-primary-action">{event.status === "live" ? "Open issues" : event.status === "preparing" ? "Continue prep" : event.status === "completed" ? "View report" : "View details"}<ArrowRight /></Link>
+        <Link href={primaryHref} className="event-primary-action">{primaryLabel}<ArrowRight /></Link>
         <Link href={`/events/${event.id}`} className="event-secondary-action">View event <ChevronRight /></Link>
       </div>
     </article>

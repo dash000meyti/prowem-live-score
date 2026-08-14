@@ -6,7 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('exposes a successful authenticated session', () async {
     final controller = LoginController(_FakeAuthRepository());
-    final result = await controller.login(email: 'organizer@prowem.test', password: 'password');
+    final result = await controller.login(
+        email: 'organizer@prowem.test', password: 'password');
     expect(result, isTrue);
     expect(controller.session?.user.role, 'organizer');
     expect(controller.isLoading, isFalse);
@@ -15,7 +16,12 @@ void main() {
 
 class _FakeAuthRepository implements AuthRepository {
   @override
-  Future<AuthSession> login({required String email, required String password}) async => AuthSession(token: 'token', user: AuthUser(id: 1, name: 'Organizer', email: email, role: 'organizer'));
+  Future<AuthSession> login(
+          {required String email, required String password}) async =>
+      AuthSession(
+          token: 'token',
+          user: AuthUser(
+              id: 1, name: 'Organizer', email: email, role: 'organizer'));
 
   @override
   Future<void> logout() async {}

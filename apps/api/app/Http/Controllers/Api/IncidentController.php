@@ -22,7 +22,7 @@ class IncidentController extends Controller
     public function index(Event $event, IncidentIndexRequest $request): JsonResponse
     {
         $this->authorize('view', $event);
-        $q = $event->incidents()->with('ticket')->when($request->status, fn ($q, $v) => $q->where('status', $v))->when($request->type, fn ($q, $v) => $q->where('type', $v))->when($request->category, fn ($q, $v) => $q->where('category', $v))->when($request->severity, fn ($q, $v) => $q->where('severity', $v))->when($request->from, fn ($q, $v) => $q->where('started_at', '>=', $v))->when($request->to, fn ($q, $v) => $q->where('started_at', '<=', $v));
+        $q = $event->incidents()->with(['fixture', 'venue', 'ticket.assignee', 'ticket.venue', 'ticket.fixture.venue'])->when($request->status, fn ($q, $v) => $q->where('status', $v))->when($request->type, fn ($q, $v) => $q->where('type', $v))->when($request->category, fn ($q, $v) => $q->where('category', $v))->when($request->severity, fn ($q, $v) => $q->where('severity', $v))->when($request->from, fn ($q, $v) => $q->where('started_at', '>=', $v))->when($request->to, fn ($q, $v) => $q->where('started_at', '<=', $v));
         $sort = $request->input('sort', 'started_at');
         $direction = $request->input('direction', 'desc');
 
@@ -44,7 +44,7 @@ class IncidentController extends Controller
     {
         $this->authorize('view', $incident->event);
 
-        return ApiResponse::resource(new IncidentResource($incident->load('ticket')), 'Incident retrieved successfully.');
+        return ApiResponse::resource(new IncidentResource($incident->load(['fixture', 'venue', 'ticket.assignee', 'ticket.venue', 'ticket.fixture.venue'])), 'Incident retrieved successfully.');
     }
 
     #[Response(type: 'array{success: true, message: string|null, data: \App\Http\Resources\IncidentResource}')]

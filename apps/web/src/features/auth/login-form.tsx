@@ -37,8 +37,8 @@ export function LoginForm() {
     }
   }
 
-  function useDemoAccount() {
-    setEmail("organizer@prowem.test");
+  function selectDemoAccount(nextEmail: string) {
+    setEmail(nextEmail);
     setPassword("password");
   }
 
@@ -74,9 +74,14 @@ export function LoginForm() {
           </span>
         </label>
 
-        <button type="button" className="demo-login-link" onClick={useDemoAccount}>
-          Use organizer demo account
-        </button>
+        <div className="grid grid-cols-2 gap-2" aria-label="Demo personas">
+          <button type="button" className="demo-login-link" onClick={() => selectDemoAccount("organizer@prowem.test")}>
+            Organizer demo
+          </button>
+          <button type="button" className="demo-login-link" onClick={() => selectDemoAccount("support@prowem.test")}>
+            Support Agent demo
+          </button>
+        </div>
 
         <button type="submit" className="login-submit" disabled={pending}>
           <span>{pending ? "Signing in…" : "Sign In"}</span>

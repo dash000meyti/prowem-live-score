@@ -16,6 +16,9 @@ class DemoSalzburgOperationsCupSeeder extends Seeder
         $event = $data['event'];
         $organizer = $data['organizer'];
         $builder->standardDimensions($event);
+        Fixture::query()->where('event_id', $event->id)->where('number', '<=', 17)->update(['status' => 'completed']);
+        Fixture::query()->where('event_id', $event->id)->whereIn('number', [18, 19, 20])->update(['status' => 'live']);
+        Fixture::query()->where('event_id', $event->id)->where('number', 22)->update(['kickoff_at' => now()->addMinutes(7)]);
         $data['teams'][0]->update(['name' => 'FC Linz']);
 
         $definitions = [

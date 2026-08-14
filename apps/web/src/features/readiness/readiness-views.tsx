@@ -114,23 +114,14 @@ export function DimensionPage() {
       ) : (
         <ul className="space-y-3">
           {data.items.map((item) => {
-            const critical = Boolean(item.metadata && item.metadata.is_critical);
-            const errorCode =
-              item.metadata && typeof item.metadata.error_code === "string"
-                ? item.metadata.error_code
-                : null;
+            const teamHref = item.subject.type === "team" && item.subject.id ? `/events/${params.eventId}/teams/${item.subject.id}` : null;
             return (
               <Card key={item.id}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium">{item.label}</p>
                     <p className="text-sm text-prowem-muted">{item.message}</p>
-                    <p className="mt-1 text-xs text-prowem-muted">
-                      {item.subject.type}
-                      {item.subject.id ? ` #${item.subject.id}` : ""}
-                      {critical ? " · critical" : ""}
-                      {errorCode ? ` · ${errorCode}` : ""}
-                    </p>
+                    {teamHref ? <Link className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-prowem-coral hover:underline" href={teamHref}>Open team passport →</Link> : null}
                   </div>
                   <Badge value={item.status} />
                 </div>

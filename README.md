@@ -74,6 +74,8 @@ Password for all seeded users: `password`
 
 See [apps/api/docs/demo-data.md](apps/api/docs/demo-data.md) and [apps/api/docs/mobile-api-contract.md](apps/api/docs/mobile-api-contract.md).
 
+The presenter-ready multi-persona walkthrough is in [docs/demo-script.md](docs/demo-script.md). The detailed screen/API mapping remains in [docs/vertical-slice-demo.md](docs/vertical-slice-demo.md).
+
 ## Deploy
 
 See [docs/deployment.md](docs/deployment.md) for the demo/production deployment

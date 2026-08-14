@@ -40,13 +40,16 @@ class DemoSeedDataTest extends TestCase
         $this->assertSame('in_progress', $technical->status->value);
         $this->assertSame(1, SupportTicket::query()->where('incident_id', $technical->id)->where('priority', 'p1')->count());
         $this->assertTrue($event->incidents()->where('type', 'operational')->where('category', 'referee_absent')->exists());
+        $this->assertSame(2, $event->fixtures()->where('status', 'live')->count());
     }
 
     public function test_alpine_is_derived_blocked_and_cannot_start(): void
     {
         $event = $this->event('ALP-2026');
         $summary = app(EventReadinessService::class)->summarize($event);
+        $salzburg = $event->teams()->where('name', 'Salzburg United')->firstOrFail();
         $this->assertSame('blocked', $summary['status']);
+        $this->assertSame('blocked', $salzburg->readiness_status->value);
         $this->assertGreaterThanOrEqual(2, $summary['critical_blockers_count']);
         $this->assertGreaterThanOrEqual(4, $summary['actions_required_count']);
         $this->patchJson("/api/v1/events/{$event->id}/status", ['status' => 'live'])->assertConflict()->assertJsonPath('error.code', 'EVENT_NOT_READY');
@@ -68,6 +71,7 @@ class DemoSeedDataTest extends TestCase
         $this->assertSame(0, $event->tickets()->count());
         $this->assertSame(3, $event->readinessChecks()->whereIn('dimension', ['live_score', 'streaming', 'graphics'])->where('status', 'ready')->count());
         $this->assertSame(12, $event->fixtures()->where('number', 14)->value('delay_minutes'));
+        $this->assertSame(3, $event->fixtures()->where('status', 'live')->count());
     }
 
     public function test_zurich_has_escalations_and_internal_conversation_is_hidden(): void

@@ -134,6 +134,8 @@ export type Incident = {
   event_id: number;
   fixture_id: number | null;
   venue_id: number | null;
+  fixture?: { id: number; number: number; kickoff_at: string } | null;
+  venue?: { id: number; name: string } | null;
   type: IncidentType;
   category: string;
   severity: IncidentSeverity;

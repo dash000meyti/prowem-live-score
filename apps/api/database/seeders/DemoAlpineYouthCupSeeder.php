@@ -12,7 +12,7 @@ class DemoAlpineYouthCupSeeder extends Seeder
     {
         $data = $builder->event('ALP-2026', 'Alpine Youth Cup 2026', 'preparing', 12, 24, 3, 6, 30);
         $event = $data['event'];
-        $data['teams'][0]->update(['name' => 'Alpine Juniors A']);
+        $data['teams'][0]->update(['name' => 'Salzburg United', 'manager_name' => 'Martin Berger', 'manager_phone' => '+43 660 123456']);
         $data['teams'][1]->update(['name' => 'Alpine Juniors B']);
         $builder->teamChecks($event, $data['teams'][0], ['registration' => ReadinessStatus::Ready, 'payment' => ReadinessStatus::Blocked, 'roster' => ReadinessStatus::Ready, 'eligibility' => ReadinessStatus::Ready, 'documents' => ReadinessStatus::Ready, 'check_in' => ReadinessStatus::Warning]);
         $builder->teamChecks($event, $data['teams'][1], ['registration' => ReadinessStatus::Ready, 'payment' => ReadinessStatus::Ready, 'roster' => ReadinessStatus::Blocked, 'eligibility' => ReadinessStatus::Ready, 'documents' => ReadinessStatus::Warning, 'check_in' => ReadinessStatus::Ready]);

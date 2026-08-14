@@ -26,6 +26,7 @@ use App\Models\User;
 use App\Models\Venue;
 use App\Services\EventReadinessService;
 use App\Services\EventReportService;
+use Carbon\CarbonInterface;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 
@@ -64,7 +65,7 @@ class EventCareController extends Controller
             $fixtures[] = [
                 'id' => (int) $fixture->id,
                 'number' => (int) $fixture->number,
-                'kickoff_at' => $kickoff instanceof \Carbon\CarbonInterface ? $kickoff->toISOString() : (string) $kickoff,
+                'kickoff_at' => $kickoff instanceof CarbonInterface ? $kickoff->toISOString() : (string) $kickoff,
                 'status' => $fixture->status,
                 'venue_id' => $fixture->venue_id ? (int) $fixture->venue_id : null,
                 'home_team' => $home instanceof Team ? ['id' => (int) $home->id, 'name' => $home->name] : null,

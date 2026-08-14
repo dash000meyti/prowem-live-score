@@ -32,7 +32,7 @@ class SecurityAndBehaviorTest extends TestCase
     public function test_team_operation_persists_business_fact_before_projecting_readiness(): void
     {
         $event = Event::query()->where('external_reference', 'VSC-2026')->firstOrFail();
-        $team = Team::query()->where('name', 'Salzburg United')->firstOrFail();
+        $team = $event->teams()->where('name', 'Salzburg United')->firstOrFail();
         $this->actingAs($this->organizer())->postJson("/api/v1/events/{$event->id}/teams/{$team->id}/actions/verify_payment")->assertOk();
 
         $this->assertDatabaseHas('team_operation_states', ['event_id' => $event->id, 'team_id' => $team->id, 'operation' => 'verify_payment']);

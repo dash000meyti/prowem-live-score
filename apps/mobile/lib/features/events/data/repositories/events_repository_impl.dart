@@ -7,7 +7,9 @@ class EventsRepositoryImpl implements EventsRepository {
   final EventsRemoteDataSource remote;
 
   @override
-  Future<List<EventCard>> getEvents({String filter = 'all', String search = ''}) => remote.getEvents(filter: filter, search: search);
+  Future<List<EventCard>> getEvents(
+          {String filter = 'all', String search = ''}) =>
+      remote.getEvents(filter: filter, search: search);
 
   @override
   Future<EventSummary> getSummary() => remote.getSummary();

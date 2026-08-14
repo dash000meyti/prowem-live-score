@@ -17,7 +17,8 @@ class LoginController extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
     try {
-      session = await _repository.login(email: email.trim(), password: password);
+      session =
+          await _repository.login(email: email.trim(), password: password);
       return true;
     } on AppException catch (error) {
       errorMessage = error.message;

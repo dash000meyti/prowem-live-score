@@ -64,6 +64,7 @@ export function Badge({
 }) {
   const resolved = tone ?? (value ? valueTone[value] : undefined) ?? "muted";
   const label = children ?? value?.replaceAll("_", " ");
+  const symbol = value ? statusSymbol(value) : null;
 
   return (
     <span
@@ -73,7 +74,15 @@ export function Badge({
         className,
       )}
     >
-      {label}
+      {symbol ? <span aria-hidden="true">{symbol}</span> : null}{label}
     </span>
   );
+}
+
+function statusSymbol(value: string) {
+  if (["ready", "resolved", "completed", "met", "on_track"].includes(value)) return "✓";
+  if (["blocked", "critical", "p1", "breached"].includes(value)) return "!";
+  if (["warning", "approaching", "waiting"].includes(value)) return "⚠";
+  if (value === "live") return "●";
+  return "";
 }

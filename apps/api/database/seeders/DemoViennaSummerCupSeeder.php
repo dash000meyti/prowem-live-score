@@ -24,11 +24,13 @@ class DemoViennaSummerCupSeeder extends Seeder
         $data['teams'][1]->update(['name' => 'KPMG FC']);
         $builder->teamChecks($event, $salzburg, ['registration' => ReadinessStatus::Ready, 'payment' => ReadinessStatus::Blocked, 'roster' => ReadinessStatus::Ready, 'eligibility' => ReadinessStatus::Ready, 'documents' => ReadinessStatus::Ready, 'check_in' => ReadinessStatus::Warning]);
         $builder->standardDimensions($event);
+        Fixture::query()->where('event_id', $event->id)->where('number', '<=', 20)->update(['status' => 'completed']);
+        Fixture::query()->where('event_id', $event->id)->whereIn('number', [21, 22])->update(['status' => 'live']);
         $streamingCheck = $event->readinessChecks()->where('dimension', 'streaming')->firstOrFail();
         $streamingCheck->update(['status' => ReadinessStatus::Blocked, 'message' => 'Streaming unavailable on Field 2.', 'error_code' => 'STREAMING_UNAVAILABLE', 'metadata' => ['venue_id' => $data['venues'][1]->id]]);
 
         $fixture = Fixture::query()->where('event_id', $event->id)->where('number', 23)->firstOrFail();
-        $fixture->update(['venue_id' => $data['venues'][2]->id]);
+        $fixture->update(['venue_id' => $data['venues'][2]->id, 'kickoff_at' => now()->addMinutes(7)]);
         $operational = $createIncident->execute($event, ['type' => 'operational', 'category' => 'referee_absent', 'severity' => 'high', 'title' => 'Referee unavailable', 'description' => 'Assigned referee unavailable for Match #23.', 'fixture_id' => $fixture->id, 'venue_id' => $data['venues'][2]->id, 'correlation_key' => 'vienna:referee:23'], $organizer);
         $updateIncident->execute($operational, ['status' => 'acknowledged'], $organizer);
 

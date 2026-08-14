@@ -18,6 +18,7 @@ import { Card } from "@/shared/ui/card";
 import { ErrorBanner } from "@/shared/ui/error-banner";
 import { EmptyState, PageHeader } from "@/shared/ui/page-header";
 import { FilterBar, FilterInput, FilterSelect, PaginationControls } from "@/shared/ui/filters";
+import { ConfirmationDialog } from "@/shared/ui/confirmation-dialog";
 
 export function TeamsList() {
   const params = useParams<{ eventId: string }>();
@@ -106,6 +107,8 @@ export function TeamDetail() {
   const user = useSession();
   const queryClient = useQueryClient();
   const [error, setError] = useState<unknown>(null);
+  const [pendingOperation, setPendingOperation] = useState<TeamOperation | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   useEventRealtime(params.eventId);
   const query = useQuery({
     queryKey: ["event", params.eventId, "teams", params.teamId],
@@ -115,10 +118,14 @@ export function TeamDetail() {
 
   const action = useMutation({
     mutationFn: (operation: TeamOperation) =>
-      apiSend(`/events/${params.eventId}/teams/${params.teamId}/actions/${operation}`, "POST"),
-    onSuccess: () => {
+      apiSend<TeamPassport>(`/events/${params.eventId}/teams/${params.teamId}/actions/${operation}`, "POST"),
+    onSuccess: (updated) => {
+      const previous = query.data?.score;
+      queryClient.setQueryData(["event", params.eventId, "teams", params.teamId], updated);
       queryClient.invalidateQueries({ queryKey: ["event", params.eventId] });
       setError(null);
+      setPendingOperation(null);
+      setSuccess(`Check completed. Team readiness ${previous === undefined ? `${updated.score}%` : `${previous}% → ${updated.score}%`}. Event readiness updated automatically.`);
     },
     onError: setError,
   });
@@ -130,6 +137,9 @@ export function TeamDetail() {
   if (!data) {
     return <p>Loading team…</p>;
   }
+
+  const unresolved = data.checks.filter((check) => check.status !== "ready");
+  const completed = data.checks.filter((check) => check.status === "ready");
 
   return (
     <div className="space-y-4">
@@ -144,8 +154,9 @@ export function TeamDetail() {
         {data.first_match ? ` · ${formatWhen(data.first_match.kickoff_at)}` : ""}
       </p>
       <ErrorBanner error={error} />
-      <ul className="space-y-3">
-        {data.checks.map((check) => (
+      {success ? <div role="status" className="rounded-2xl border border-prowem-success/30 bg-prowem-success/10 px-4 py-3 text-sm text-prowem-success">✓ {success}</div> : null}
+      {unresolved.length ? <><h2 className="text-sm font-bold uppercase tracking-[.16em] text-prowem-warning">Needs attention</h2><ul className="space-y-3">
+        {unresolved.map((check) => (
           <Card key={check.id}>
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -158,7 +169,7 @@ export function TeamDetail() {
                   <Button
                     type="button"
                     disabled={action.isPending}
-                    onClick={() => action.mutate(check.action as TeamOperation)}
+                    onClick={() => setPendingOperation(check.action as TeamOperation)}
                   >
                     {humanize(check.action)}
                   </Button>
@@ -167,7 +178,17 @@ export function TeamDetail() {
             </div>
           </Card>
         ))}
-      </ul>
+      </ul></> : null}
+      <details className="rounded-2xl border border-white/10 bg-white/[.03] p-4" open={unresolved.length === 0}><summary className="cursor-pointer font-semibold">Completed checks ({completed.length})</summary><ul className="mt-3 grid gap-2 md:grid-cols-2">{completed.map((check) => <li key={check.id} className="flex min-h-12 items-center justify-between rounded-xl border border-white/10 px-3"><span>{check.label}</span><Badge value="ready" /></li>)}</ul></details>
+      <ConfirmationDialog
+        open={pendingOperation !== null}
+        title={pendingOperation ? humanize(pendingOperation) : "Confirm team action"}
+        description="Confirm this team check. Team and Event readiness will update automatically."
+        confirmLabel={pendingOperation ? humanize(pendingOperation) : "Confirm"}
+        pending={action.isPending}
+        onCancel={() => setPendingOperation(null)}
+        onConfirm={() => { if (pendingOperation) action.mutate(pendingOperation); }}
+      />
     </div>
   );
 }

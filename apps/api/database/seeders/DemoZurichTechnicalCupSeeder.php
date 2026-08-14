@@ -19,6 +19,8 @@ class DemoZurichTechnicalCupSeeder extends Seeder
         $organizer = $data['organizer'];
         $support = User::query()->where('email', 'support@prowem.test')->firstOrFail();
         $builder->standardDimensions($event);
+        $event->fixtures()->where('number', '<=', 12)->update(['status' => 'completed']);
+        $event->fixtures()->whereIn('number', [13, 14])->update(['status' => 'live']);
 
         $streaming = $createIncident->execute($event, ['type' => 'technical', 'category' => 'streaming', 'severity' => 'critical', 'title' => 'Streaming unavailable', 'description' => 'Live stream unavailable on Field 1.', 'venue_id' => $data['venues'][0]->id, 'correlation_key' => 'zurich:streaming:field-1'], $organizer);
         $updateIncident->execute($streaming, ['status' => 'in_progress'], $support);

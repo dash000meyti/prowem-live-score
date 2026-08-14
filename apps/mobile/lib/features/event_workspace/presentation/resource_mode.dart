@@ -1,1 +1,9 @@
-enum ResourceMode { readiness, teams, live, incidents, tickets, activity, report }
+enum ResourceMode {
+  readiness,
+  teams,
+  live,
+  incidents,
+  tickets,
+  activity,
+  report
+}

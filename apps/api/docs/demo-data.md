@@ -22,7 +22,7 @@ All passwords are `password`.
 
 - Reference/ID: `ALP-2026` / `2`; status `preparing`.
 - Use for: blocked Home, needs-attention, dimensions, two Team Passports, disabled Start Event.
-- Payment and roster critical blockers, check-in/documents/referee warnings, critical Field 2 streaming-test failure. Starting returns `EVENT_NOT_READY`.
+- Salzburg United has a blocked Payment check and a Check-in warning. Alpine Juniors B has a blocked Roster check. The Event also includes referee and document warnings plus a critical Field 2 streaming-test failure. Starting returns `EVENT_NOT_READY`.
 
 ## Scenario 3 — Munich Ready Cup
 

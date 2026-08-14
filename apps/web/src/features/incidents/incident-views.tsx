@@ -280,6 +280,8 @@ export function IncidentDetail() {
   const queryClient = useQueryClient();
   const lookups = useEventLookups(params.eventId);
   const [error, setError] = useState<unknown>(null);
+  const [resolutionOpen, setResolutionOpen] = useState(false);
+  const [resolution, setResolution] = useState("");
   useEventRealtime(params.eventId);
   const query = useQuery({
     queryKey: ["event", params.eventId, "incidents", params.incidentId],
@@ -292,6 +294,8 @@ export function IncidentDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["event", params.eventId] });
       setError(null);
+      setResolutionOpen(false);
+      setResolution("");
     },
     onError: setError,
   });
@@ -326,6 +330,7 @@ export function IncidentDetail() {
         }
       />
       <ErrorBanner error={error} />
+      {incident.type === "technical" ? <section className="rounded-2xl border border-purple-400/30 bg-purple-400/10 p-4"><p className="text-xs font-bold uppercase tracking-[.18em] text-purple-300">PROWEM is handling this</p><h2 className="mt-1 text-xl font-extrabold">Technical ownership and SLA belong to PROWEM Support</h2><p className="mt-1 text-sm text-prowem-muted">You can follow the customer-visible conversation; assignment, priority and internal transitions remain hidden.</p>{ticket ? <div className="mt-4 flex flex-wrap gap-2"><Link className="btn-primary-glow" href={`/events/${params.eventId}/tickets/${ticket.id}`}>View support ticket</Link><Link className="btn-ghost-glass" href={`/events/${params.eventId}/tickets/${ticket.id}`}>Message support</Link></div> : null}</section> : <section className="rounded-2xl border border-prowem-cyan/30 bg-prowem-cyan/5 p-4"><p className="text-xs font-bold uppercase tracking-[.18em] text-prowem-cyan">Organizer owned</p><p className="mt-1 text-sm text-prowem-muted">Acknowledge, handle and resolve this operational issue with a persisted resolution.</p></section>}
       <Card>
         <CardTitle>Details</CardTitle>
         <dl className="grid gap-2 text-sm md:grid-cols-2">
@@ -365,7 +370,7 @@ export function IncidentDetail() {
             </Link>
           </p>
         ) : null}
-        {incident.metadata && Object.keys(incident.metadata).length > 0 ? (
+        {canSupport(user.role) && incident.metadata && Object.keys(incident.metadata).length > 0 ? (
           <pre className="mt-3 overflow-x-auto rounded-xl bg-black/30 p-3 text-xs text-prowem-muted">
             {JSON.stringify(incident.metadata, null, 2)}
           </pre>
@@ -374,36 +379,10 @@ export function IncidentDetail() {
       {canUpdate && next.length > 0 ? (
         <Card>
           <CardTitle>Update status</CardTitle>
-          <form
-            className="grid gap-2 md:grid-cols-3"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const form = new FormData(event.currentTarget);
-              const status = String(form.get("status")) as IncidentStatus;
-              update.mutate({
-                status,
-                resolution: optionalString(form.get("resolution")),
-              });
-            }}
-          >
-            <select name="status" className="input-glass bg-prowem-bg">
-              {next.map((value) => (
-                <option key={value} value={value}>
-                  {humanize(value)}
-                </option>
-              ))}
-            </select>
-            <input
-              name="resolution"
-              placeholder="Resolution (required when resolving)"
-              className="input-glass"
-            />
-            <Button type="submit" disabled={update.isPending}>
-              Update
-            </Button>
-          </form>
+          <div className="flex flex-wrap gap-2">{next.filter((status) => status !== "resolved").map((status) => <Button key={status} type="button" variant="secondary" disabled={update.isPending} onClick={() => update.mutate({ status })}>{humanize(status)}</Button>)}{next.includes("resolved") ? <Button type="button" disabled={update.isPending} onClick={() => setResolutionOpen(true)}>Resolve issue</Button> : null}</div>
         </Card>
       ) : null}
+      {resolutionOpen ? <div className="fixed inset-0 z-50 grid place-items-end bg-black/70 backdrop-blur-sm sm:place-items-center sm:p-6" role="presentation"><section role="dialog" aria-modal="true" aria-labelledby="resolve-title" className="w-full rounded-t-3xl border border-white/15 bg-[#0d1117] p-5 sm:max-w-lg sm:rounded-3xl"><h2 id="resolve-title" className="text-xl font-extrabold">Resolve incident</h2><p className="mt-2 text-sm text-prowem-muted">Describe the corrective action. It will be persisted in Event Care history.</p><textarea autoFocus value={resolution} onChange={(event) => setResolution(event.target.value)} placeholder="Backup referee confirmed." className="input-glass mt-4 min-h-28" /><div className="mt-4 grid gap-2 sm:grid-cols-2"><Button type="button" variant="secondary" disabled={update.isPending} onClick={() => setResolutionOpen(false)}>Cancel</Button><Button type="button" disabled={update.isPending || !resolution.trim()} onClick={() => update.mutate({ status: "resolved", resolution: resolution.trim() })}>{update.isPending ? "Resolving…" : "Resolve issue"}</Button></div></section></div> : null}
     </div>
   );
 }

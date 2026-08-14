@@ -212,6 +212,7 @@ export function TicketDetail() {
   const lookups = useEventLookups(params.eventId);
   const [error, setError] = useState<unknown>(null);
   const [messagePage, setMessagePage] = useState(1);
+  const [messageBody, setMessageBody] = useState("");
   useEventRealtime(params.eventId);
   const ticket = useQuery({
     queryKey: ["event", params.eventId, "tickets", params.ticketId],
@@ -233,6 +234,7 @@ export function TicketDetail() {
         queryKey: ["event", params.eventId, "tickets", params.ticketId],
       });
       setError(null);
+      setMessageBody("");
     },
     onError: setError,
   });
@@ -278,6 +280,7 @@ export function TicketDetail() {
         {data.assignee ? ` · Assigned to ${data.assignee.name}` : ""}
         {data.affected_service ? ` · ${humanize(data.affected_service)}` : ""}
       </p>
+      <div className="grid gap-3 md:grid-cols-3"><Card><p className="text-xs uppercase tracking-wide text-prowem-muted">Support owner</p><p className="mt-2 font-semibold">{data.assignee?.name ?? "PROWEM Support assigned"}</p></Card><Card><p className="text-xs uppercase tracking-wide text-prowem-muted">Affected service</p><p className="mt-2 font-semibold">{data.affected_service ? humanize(data.affected_service) : "Event Care"}</p></Card><Card><p className="text-xs uppercase tracking-wide text-prowem-muted">SLA</p><p className="mt-2 font-semibold">{humanize(data.sla_status)}</p></Card></div>
       {data.incident ? (
         <p className="text-sm">
           Linked incident{" "}
@@ -290,6 +293,7 @@ export function TicketDetail() {
         </p>
       ) : null}
       <ErrorBanner error={error} />
+      {data.status === "resolved" ? <div role="status" className="rounded-2xl border border-prowem-success/30 bg-prowem-success/10 p-4"><p className="font-bold text-prowem-success">✓ Resolved</p><p className="mt-1 text-sm text-white">{data.resolution ?? "PROWEM Support resolved this request."}</p><p className="mt-1 text-xs text-prowem-muted">Resolved {formatWhen(data.resolved_at)}</p></div> : null}
 
       {canSupport(user.role) ? (
         <Card>
@@ -302,13 +306,11 @@ export function TicketDetail() {
               const status = String(form.get("status")) as TicketStatus;
               const assignee = optionalNumber(form.get("assignee_id"));
               admin.mutate({
-                status,
+                ...(status === data.status ? {} : { status }),
                 priority: String(form.get("priority")),
                 assignee_id: assignee ?? null,
                 resolution: optionalString(form.get("resolution")),
                 resolution_code: optionalString(form.get("resolution_code")),
-                customer_note: optionalString(form.get("customer_note")),
-                internal_note: optionalString(form.get("internal_note")),
               });
             }}
           >
@@ -350,16 +352,6 @@ export function TicketDetail() {
               placeholder="Resolution (required when resolving)"
               className="input-glass md:col-span-2"
             />
-            <textarea
-              name="customer_note"
-              placeholder="Customer note"
-              className="input-glass"
-            />
-            <textarea
-              name="internal_note"
-              placeholder="Internal note"
-              className="input-glass"
-            />
             <Button type="submit" disabled={admin.isPending}>
               Update ticket
             </Button>
@@ -370,14 +362,14 @@ export function TicketDetail() {
       <Card>
         <CardTitle>Conversation</CardTitle>
         <ul className="space-y-3">
-          {(messages.data?.data ?? []).map((message) => (
-            <li key={message.id} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm">
-              <p className="text-xs text-prowem-muted">
-                {message.author?.name} · {message.visibility} · {formatWhen(message.created_at)}
-              </p>
-              <p>{message.body}</p>
-            </li>
-          ))}
+          {(messages.data?.data ?? []).map((message) => {
+            const supportUser = canSupport(user.role);
+            const authoredBySupport = message.author?.role !== "organizer";
+            const outgoing = supportUser ? authoredBySupport : !authoredBySupport;
+            const internal = message.visibility === "internal";
+            return <li key={message.id} className={`max-w-[85%] rounded-2xl border p-3 text-sm ${internal ? "mr-auto border-amber-400/30 bg-amber-400/5" : outgoing ? "ml-auto border-prowem-coral/30 bg-prowem-coral/10" : "mr-auto border-purple-400/20 bg-purple-400/5"}`}><p className={`flex items-center gap-2 text-xs ${internal ? "text-amber-300" : outgoing ? "text-prowem-coral" : "text-purple-300"}`}><span>{outgoing ? "You" : message.author?.name ?? (supportUser ? "Customer" : "PROWEM Support")} · {formatWhen(message.created_at)}</span>{internal ? <b className="rounded-full border border-amber-400/30 px-2 py-0.5 uppercase tracking-wide">Internal</b> : null}</p><p className="mt-1 leading-6">{message.body}</p></li>;
+          })}
+          {!messages.isLoading && (messages.data?.data ?? []).length === 0 ? <li className="py-8 text-center text-sm text-prowem-muted">No conversation messages yet.</li> : null}
         </ul>
         <PaginationControls
           pagination={messages.data?.meta.pagination}
@@ -387,25 +379,23 @@ export function TicketDetail() {
           className="mt-3 space-y-2"
           onSubmit={(event) => {
             event.preventDefault();
-            const form = new FormData(event.currentTarget);
             send.mutate({
-              body: String(form.get("body")),
+              body: messageBody.trim(),
               ...(canSupport(user.role)
-                ? { visibility: String(form.get("visibility")) }
+                ? { visibility: String(new FormData(event.currentTarget).get("visibility")) }
                 : {}),
             });
-            event.currentTarget.reset();
           }}
         >
-          <textarea name="body" required className="input-glass" />
+          <textarea name="body" required value={messageBody} onChange={(event) => setMessageBody(event.target.value)} placeholder="Write a message…" className="input-glass" />
           {canSupport(user.role) ? (
-            <select name="visibility" className="input-glass">
-              <option value="customer">customer</option>
-              <option value="internal">internal</option>
+            <select name="visibility" className="input-glass" aria-label="Message visibility">
+              <option value="customer">Customer-visible reply</option>
+              <option value="internal">Internal support note</option>
             </select>
           ) : null}
-          <Button type="submit" disabled={send.isPending}>
-            Send
+          <Button type="submit" disabled={send.isPending || !messageBody.trim()}>
+            {send.isPending ? "Sending…" : "Send"}
           </Button>
         </form>
       </Card>

@@ -6,7 +6,11 @@ class AuthSession {
 }
 
 class AuthUser {
-  const AuthUser({required this.id, required this.name, required this.email, required this.role});
+  const AuthUser(
+      {required this.id,
+      required this.name,
+      required this.email,
+      required this.role});
 
   final int id;
   final String name;

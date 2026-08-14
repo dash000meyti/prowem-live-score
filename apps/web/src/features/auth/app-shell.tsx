@@ -3,17 +3,12 @@
 import { useSession } from "@/shared/auth/session-context";
 import { cn } from "@/shared/lib/cn";
 import { useUserRealtime } from "@/shared/realtime/hooks";
-import { Activity, Bell, CheckSquare, ChevronDown, FileText, Home, LayoutGrid, Menu, MessageSquare, Radio, ShieldCheck, Users, X, TriangleAlert } from "lucide-react";
+import { Activity, Bell, CheckSquare, ChevronDown, Home, LayoutGrid, Menu, MessageSquare, Radio, ShieldCheck, Users, X, TriangleAlert, Headphones } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 type ShellLink = { href: string; label: string; icon: typeof Home; count?: number };
-
-const mainLinks: ShellLink[] = [
-  { href: "/events", label: "My Events", icon: LayoutGrid },
-  { href: "/notifications", label: "Notifications", icon: Bell },
-];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const user = useSession();
@@ -22,16 +17,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   useUserRealtime(user.id);
   const eventId = pathname.match(/^\/events\/(\d+)/)?.[1];
-  const links: ShellLink[] = eventId ? [
+  const supportUser = user.role === "support_agent" || user.role === "support_lead" || user.role === "admin";
+  const mainLinks: ShellLink[] = [
+    { href: "/events", label: supportUser ? "Support Queue" : "My Events", icon: supportUser ? Headphones : LayoutGrid },
+    { href: "/notifications", label: "Notifications", icon: Bell },
+  ];
+  const organizerLinks: ShellLink[] = [
     { href: `/events/${eventId}`, label: "Event Home", icon: Home },
     { href: `/events/${eventId}/readiness`, label: "Event Checklists", icon: CheckSquare },
-    { href: `/events/${eventId}/live`, label: "Matches", icon: Radio },
+    { href: `/events/${eventId}/live`, label: "Live Control", icon: Radio },
     { href: `/events/${eventId}/teams`, label: "Teams", icon: Users },
     { href: `/events/${eventId}/incidents`, label: "Operations", icon: TriangleAlert },
-    { href: `/events/${eventId}/tickets`, label: "Messages", icon: MessageSquare },
+    { href: `/events/${eventId}/tickets`, label: "PROWEM Support", icon: MessageSquare },
     { href: `/events/${eventId}/activity`, label: "Activity", icon: Activity },
-    { href: `/events/${eventId}/report`, label: "Reports", icon: FileText },
-  ] : mainLinks;
+  ];
+  const supportLinks: ShellLink[] = [
+    { href: `/events/${eventId}`, label: "Event Context", icon: Home },
+    { href: `/events/${eventId}/incidents`, label: "Technical Incidents", icon: TriangleAlert },
+    { href: `/events/${eventId}/tickets`, label: "Support Tickets", icon: Headphones },
+    { href: `/events/${eventId}/activity`, label: "Activity", icon: Activity },
+  ];
+  const links = eventId ? (supportUser ? supportLinks : organizerLinks) : mainLinks;
 
   async function logout() { await fetch("/api/auth/logout", { method: "POST" }); router.push("/"); router.refresh(); }
 
@@ -40,7 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside className="app-sidebar">
         <Brand />
         <nav>{links.map(({ href, label, icon: Icon, count }, index) => { const active = eventId ? pathname === href || (index > 0 && pathname.startsWith(href)) : index === 0 && pathname === "/events"; return <Link key={`${label}-${index}`} href={href} className={cn(active && "is-active")}><Icon /><span>{label}</span>{count ? <b>{count}</b> : null}</Link>; })}</nav>
-        <div className="sidebar-status"><p><ShieldCheck /> Secure access</p><p><i /> All systems operational</p></div>
+        <div className="sidebar-status"><p><ShieldCheck /> Secure access</p><p><i /> Role-protected workspace</p></div>
       </aside>
 
       <header className="app-mobile-header"><Brand /><div><Link href="/notifications" aria-label="Notifications"><Bell /></Link><button type="button" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Menu /></button></div></header>

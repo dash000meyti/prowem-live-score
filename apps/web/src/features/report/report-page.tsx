@@ -72,8 +72,7 @@ export function ReportPage() {
           <ul className="space-y-2 text-sm">
             {data.major_blockers.map((item) => (
               <li key={item.key}>
-                <span className="font-medium">{item.key}</span>
-                {item.error_code ? ` (${item.error_code})` : ""}
+                <span className="font-medium">{item.key.replaceAll("_", " ")}</span>
                 {item.message ? ` — ${item.message}` : ""}
               </li>
             ))}

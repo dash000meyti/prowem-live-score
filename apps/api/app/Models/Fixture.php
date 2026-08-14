@@ -14,16 +14,19 @@ class Fixture extends Model
         return ['kickoff_at' => 'immutable_datetime'];
     }
 
+    /** @return BelongsTo<Venue, $this> */
     public function venue(): BelongsTo
     {
         return $this->belongsTo(Venue::class);
     }
 
+    /** @return BelongsTo<Team, $this> */
     public function homeTeam(): BelongsTo
     {
         return $this->belongsTo(Team::class, 'home_team_id');
     }
 
+    /** @return BelongsTo<Team, $this> */
     public function awayTeam(): BelongsTo
     {
         return $this->belongsTo(Team::class, 'away_team_id');

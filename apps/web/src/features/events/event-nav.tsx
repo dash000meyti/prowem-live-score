@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/shared/lib/cn";
+import { useSession } from "@/shared/auth/session-context";
 
-const links = [
+const organizerLinks = [
   ["", "Home"],
   ["/readiness", "Readiness"],
   ["/teams", "Teams"],
@@ -12,12 +13,20 @@ const links = [
   ["/incidents", "Incidents"],
   ["/tickets", "Tickets"],
   ["/activity", "Activity"],
-  ["/report", "Report"],
+] as const;
+
+const supportLinks = [
+  ["", "Event context"],
+  ["/incidents", "Technical incidents"],
+  ["/tickets", "Support tickets"],
+  ["/activity", "Activity"],
 ] as const;
 
 export function EventNav({ eventId }: { eventId: string }) {
   const pathname = usePathname();
+  const user = useSession();
   const base = `/events/${eventId}`;
+  const links = user.role === "organizer" ? organizerLinks : supportLinks;
 
   return (
     <nav className="event-context-nav mb-6 items-center gap-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

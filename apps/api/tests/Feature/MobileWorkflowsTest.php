@@ -71,7 +71,7 @@ class MobileWorkflowsTest extends TestCase
         $event = Event::query()->where('external_reference', 'VSC-2026')->firstOrFail();
         $team = Team::query()->where('name', 'Salzburg United')->firstOrFail();
         $url = "/api/v1/events/{$event->id}/teams/{$team->id}/actions/verify_payment";
-        $this->postJson($url)->assertOk()->assertJsonPath('data.checks.3.status', 'ready');
+        $this->postJson($url)->assertOk()->assertJsonPath('data.checks.3.status', 'ready')->assertJsonStructure(['data' => ['first_match' => ['id', 'kickoff_at', 'field']]]);
         $this->postJson($url)->assertOk();
         $this->assertDatabaseCount('team_operation_states', 1);
         $this->assertSame('ready', ReadinessCheck::query()->where('event_id', $event->id)->where('subject_id', $team->id)->where('check_type', 'payment')->firstOrFail()->status->value);

@@ -14,6 +14,7 @@ use App\Http\Resources\ReadinessDimensionDetailResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Event;
 use App\Models\ReadinessCheck;
+use App\Models\User;
 use App\Services\EventReadinessService;
 use App\Services\ReadinessCalculator;
 use Dedoc\Scramble\Attributes\Response;
@@ -28,6 +29,7 @@ class MobileController extends Controller
     public function me(): JsonResponse
     {
         $u = request()->user();
+        abort_unless($u instanceof User, 401);
 
         return ApiResponse::success(['id' => (int) $u->id, 'name' => $u->name, 'email' => $u->email, 'role' => $u->role->value, 'customer' => $u->account?->only(['id', 'name'])], 'Current user retrieved successfully.');
     }
@@ -36,11 +38,12 @@ class MobileController extends Controller
     public function events(EventIndexRequest $request): JsonResponse
     {
         $u = $request->user();
+        abort_unless($u instanceof User, 401);
         $q = $this->visibleEvents($u)->when($request->status, fn ($q, $v) => $q->where('status', $v))->when($request->boolean('needs_attention'), fn ($q) => $this->needsAttention($q))->when($request->search, fn ($q, $v) => $q->where(fn ($q) => $q->where('name', 'ilike', "%{$v}%")->orWhere('external_reference', 'ilike', "%{$v}%")))->when($request->from, fn ($q, $v) => $q->where('starts_at', '>=', $v))->when($request->to, fn ($q, $v) => $q->where('starts_at', '<=', $v))->with(['venues', 'readinessChecks'])->withCount(['teams', 'venues', 'incidents as open_incidents_count' => fn ($q) => $q->where('status', '!=', 'resolved'), 'incidents as critical_incidents_count' => fn ($q) => $q->where('status', '!=', 'resolved')->where('severity', 'critical'), 'tickets as open_tickets_count' => fn ($q) => $q->where('status', '!=', 'resolved')]);
         $p = $q->orderBy($request->input('sort', 'starts_at'), $request->input('direction', 'asc'))->paginate($request->perPage())->withQueryString();
-        $p->getCollection()->each(function ($event) {
-            $event->venue_summary = $event->venues->first()?->only(['id', 'name']);
-            $event->readiness_summary = collect($this->readiness->summarize($event))->only(['status', 'score', 'critical_blockers_count', 'actions_required_count'])->all();
+        $p->getCollection()->each(function (Event $event): void {
+            $event->setAttribute('venue_summary', $event->venues->first()?->only(['id', 'name']));
+            $event->setAttribute('readiness_summary', collect($this->readiness->summarize($event))->only(['status', 'score', 'critical_blockers_count', 'actions_required_count'])->all());
         });
 
         return ApiResponse::paginated($p, EventListResource::class, 'Events retrieved successfully.');
@@ -48,17 +51,24 @@ class MobileController extends Controller
 
     public function eventSummary(): JsonResponse
     {
-        $query = $this->visibleEvents(request()->user());
+        $user = request()->user();
+        abort_unless($user instanceof User, 401);
+        $query = $this->visibleEvents($user);
         $statusCounts = (clone $query)->selectRaw('status, count(*) as aggregate')->groupBy('status')->pluck('aggregate', 'status');
 
         return ApiResponse::success(['all' => (clone $query)->count(), 'needs_attention' => $this->needsAttention(clone $query)->count(), 'preparing' => (int) ($statusCounts['preparing'] ?? 0), 'ready' => (int) ($statusCounts['ready'] ?? 0), 'live' => (int) ($statusCounts['live'] ?? 0), 'completed' => (int) ($statusCounts['completed'] ?? 0), 'cancelled' => (int) ($statusCounts['cancelled'] ?? 0)], 'Event summary retrieved successfully.');
     }
 
-    private function visibleEvents($user): Builder
+    /** @return Builder<Event> */
+    private function visibleEvents(User $user): Builder
     {
         return Event::query()->when($user->role === UserRole::Organizer, fn ($q) => $q->where('account_id', $user->account_id));
     }
 
+    /**
+     * @param  Builder<Event>  $query
+     * @return Builder<Event>
+     */
     private function needsAttention(Builder $query): Builder
     {
         return $query->where(function (Builder $query): void {

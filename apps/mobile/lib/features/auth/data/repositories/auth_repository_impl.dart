@@ -5,7 +5,8 @@ import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  AuthRepositoryImpl({required this.remoteDataSource, FlutterSecureStorage? storage})
+  AuthRepositoryImpl(
+      {required this.remoteDataSource, FlutterSecureStorage? storage})
       : _storage = storage ?? const FlutterSecureStorage();
 
   static const _tokenKey = 'event_care_token';
@@ -13,8 +14,10 @@ class AuthRepositoryImpl implements AuthRepository {
   final FlutterSecureStorage _storage;
 
   @override
-  Future<AuthSession> login({required String email, required String password}) async {
-    final session = await remoteDataSource.login(email: email, password: password);
+  Future<AuthSession> login(
+      {required String email, required String password}) async {
+    final session =
+        await remoteDataSource.login(email: email, password: password);
     await _storage.write(key: _tokenKey, value: session.token);
     return session;
   }

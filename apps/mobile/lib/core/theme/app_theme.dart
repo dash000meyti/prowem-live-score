@@ -9,6 +9,7 @@ abstract final class AppColors {
   static const coralDeep = Color(0xFFE54826);
   static const orange = Color(0xFFFF7A18);
   static const cyan = Color(0xFF00D4FF);
+  static const purple = Color(0xFFA78BFA);
   static const lime = Color(0xFF39FF6A);
   static const warning = Color(0xFFF5A524);
   static const danger = Color(0xFFFF3B4E);
@@ -30,7 +31,11 @@ abstract final class AppTheme {
           centerTitle: false,
           backgroundColor: AppColors.background,
           surfaceTintColor: Colors.transparent,
-          titleTextStyle: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -.2),
+          titleTextStyle: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -.2),
         ),
         cardTheme: CardThemeData(
           color: AppColors.surface,
@@ -56,12 +61,14 @@ abstract final class AppTheme {
             shape: const StadiumBorder(),
           ),
         ),
-        progressIndicatorTheme: const ProgressIndicatorThemeData(color: AppColors.coral),
+        progressIndicatorTheme:
+            const ProgressIndicatorThemeData(color: AppColors.coral),
         dividerTheme: const DividerThemeData(color: AppColors.border),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: const Color(0x660D1117),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
           hintStyle: const TextStyle(color: AppColors.muted),
           prefixIconColor: AppColors.muted,
           suffixIconColor: AppColors.muted,

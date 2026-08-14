@@ -25,7 +25,8 @@ class TeamOperationController extends Controller
         abort_unless($team->event_id === $event->id, 404);
         $team = $action->execute($event, $team, $operation, request()->user());
         $team->checks = ReadinessCheck::query()->where('event_id', $event->id)->where('subject_type', 'team')->where('subject_id', $team->id)->get();
-        $team->first_match = $event->fixtures()->where(fn ($q) => $q->where('home_team_id', $team->id)->orWhere('away_team_id', $team->id))->orderBy('kickoff_at')->first()?->only(['id', 'kickoff_at', 'venue_id']);
+        $fixture = $event->fixtures()->with('venue')->where(fn ($q) => $q->where('home_team_id', $team->id)->orWhere('away_team_id', $team->id))->orderBy('kickoff_at')->first();
+        $team->first_match = $fixture ? ['id' => $fixture->id, 'kickoff_at' => $fixture->kickoff_at->toISOString(), 'field' => $fixture->venue?->name] : null;
 
         return ApiResponse::resource(new TeamReadinessResource($team), 'Team operation completed successfully.');
     }

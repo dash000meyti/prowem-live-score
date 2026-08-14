@@ -18,7 +18,8 @@ class EventsController extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
     try {
-      final values = await Future.wait([_repository.getSummary(), _repository.getEvents(filter: filter)]);
+      final values = await Future.wait(
+          [_repository.getSummary(), _repository.getEvents(filter: filter)]);
       summary = values[0] as EventSummary;
       events = values[1] as List<EventCard>;
     } catch (_) {

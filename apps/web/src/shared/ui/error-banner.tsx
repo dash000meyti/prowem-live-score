@@ -7,7 +7,7 @@ export function ErrorBanner({ error }: { error: unknown }) {
 
   const message =
     error instanceof ApiError
-      ? `${error.message}${error.code ? ` (${error.code})` : ""}`
+      ? friendlyMessage(error)
       : error instanceof Error
         ? error.message
         : "Something went wrong.";
@@ -38,4 +38,13 @@ export function ErrorBanner({ error }: { error: unknown }) {
       ) : null}
     </div>
   );
+}
+
+function friendlyMessage(error: ApiError) {
+  if (error.code === "EVENT_NOT_READY") return "Event cannot start yet. Critical readiness blockers still require attention.";
+  if (error.code === "INCIDENT_ALREADY_OPEN") return "This issue is already being handled. Open the existing incident to continue.";
+  if (error.code === "FORBIDDEN") return "You do not have permission to perform this action.";
+  if (error.code === "UNAUTHENTICATED") return "Your session has expired. Please sign in again.";
+  if (error.status >= 500) return "Event Care is temporarily unavailable. Your current data is still shown; please try again.";
+  return error.message || "Something went wrong. Please try again.";
 }

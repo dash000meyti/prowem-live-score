@@ -15,6 +15,7 @@ class Team extends Model
         return ['readiness_status' => ReadinessStatus::class];
     }
 
+    /** @return BelongsTo<Event, $this> */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);

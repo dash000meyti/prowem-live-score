@@ -7,6 +7,7 @@ plugins {
 android {
     namespace = "com.prowem.event_care_mobile"
     compileSdk = flutter.compileSdkVersion
+    buildToolsVersion = "36.0.0"
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
