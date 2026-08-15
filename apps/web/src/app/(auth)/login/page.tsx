@@ -4,7 +4,13 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 
 export default async function LoginPage() {
-  const user = await getSessionUser();
+  let user: Awaited<ReturnType<typeof getSessionUser>> = null;
+  try {
+    user = await getSessionUser();
+  } catch {
+    // The sign-in form must remain available while the API is restarting or
+    // an old session cookie can no longer be verified.
+  }
   if (user) redirect("/events");
 
   return (
