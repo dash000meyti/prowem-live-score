@@ -20,6 +20,7 @@ final class UpdateTicket
             $ticket = SupportTicket::query()->lockForUpdate()->findOrFail($ticket->id);
             $beforeStatus = $ticket->status;
             $beforePriority = $ticket->priority;
+            $beforeAssigneeId = $ticket->assignee_id;
             $updates = collect($data)->only(['priority', 'status', 'assignee_id', 'resolution', 'resolution_code', 'customer_note', 'internal_note'])->all();
             if (isset($data['status'])) {
                 $next = TicketStatus::from($data['status']);
@@ -36,6 +37,8 @@ final class UpdateTicket
             }$ticket->update($updates);
             if ($ticket->priority !== $beforePriority) {
                 $this->activity->log($ticket->event, 'ticket_priority_changed', "Ticket priority changed {$beforePriority->value} → {$ticket->priority->value}", $actor, 'support_ticket', $ticket->id);
+            }if ($ticket->assignee_id !== $beforeAssigneeId) {
+                $this->activity->log($ticket->event, 'ticket_assignment_changed', 'Ticket support owner updated', $actor, 'support_ticket', $ticket->id);
             }if ($ticket->status !== $beforeStatus) {
                 $this->activity->log($ticket->event, 'ticket_'.$ticket->status->value, "Ticket changed {$beforeStatus->value} → {$ticket->status->value}", $actor, 'support_ticket', $ticket->id);
             }EventCareChanged::dispatch($ticket->event_id, $ticket->status === TicketStatus::Resolved ? 'ticket.resolved' : 'ticket.updated', ['id' => $ticket->id, 'status' => $ticket->status->value, 'priority' => $ticket->priority->value]);

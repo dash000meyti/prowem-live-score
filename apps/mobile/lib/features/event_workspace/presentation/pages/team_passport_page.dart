@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../data/event_workspace_repository.dart';
+import '../widgets/event_navigation_bar.dart';
 
 class TeamPassportPage extends StatefulWidget {
   const TeamPassportPage(
@@ -22,6 +23,7 @@ class _TeamPassportPageState extends State<TeamPassportPage> {
   late Future<Map<String, dynamic>> _loader =
       widget.repository.team(widget.eventId, widget.teamId);
   String? _pendingOperation;
+  String? _confirmingOperation;
   String? _error;
   String? _success;
   int? _currentScore;
@@ -32,39 +34,9 @@ class _TeamPassportPageState extends State<TeamPassportPage> {
   Future<void> _run(Map<String, dynamic> check) async {
     final operation = check['action'] as String?;
     if (operation == null) return;
-    final confirmed = await showModalBottomSheet<bool>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-          child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(_actionLabel(operation),
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w800)),
-                const SizedBox(height: 10),
-                Text(
-                    'Confirm ${_actionLabel(operation).toLowerCase()}? Readiness will update automatically.',
-                    style: const TextStyle(color: AppColors.muted)),
-                const SizedBox(height: 20),
-                FilledButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: Text(_actionLabel(operation))),
-                TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text('Cancel')),
-              ]),
-        ),
-      ),
-    );
-    if (confirmed != true || !mounted) return;
     setState(() {
       _pendingOperation = operation;
+      _confirmingOperation = null;
       _error = null;
       _success = null;
     });
@@ -80,6 +52,13 @@ class _TeamPassportPageState extends State<TeamPassportPage> {
             '${check['label']} completed. Team readiness${before == null ? '' : ' $before% →'} $after%. Event readiness recalculated.';
         _loader = Future.value(updated);
       });
+      try {
+        final fresh =
+            await widget.repository.team(widget.eventId, widget.teamId);
+        if (mounted) setState(() => _loader = Future.value(fresh));
+      } catch (_) {
+        // Keep the confirmed mutation response visible if reconciliation fails.
+      }
     } catch (error) {
       if (mounted) setState(() => _error = '$error');
     } finally {
@@ -194,22 +173,33 @@ class _TeamPassportPageState extends State<TeamPassportPage> {
                                       ],
                                       if (actionable) ...[
                                         const SizedBox(height: 12),
-                                        SizedBox(
-                                            width: double.infinity,
-                                            child: FilledButton(
-                                                onPressed:
-                                                    _pendingOperation == null
-                                                        ? () => _run(check)
-                                                        : null,
-                                                child: _pendingOperation ==
-                                                        action
-                                                    ? const SizedBox.square(
-                                                        dimension: 20,
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                                strokeWidth: 2))
-                                                    : Text(
-                                                        _actionLabel(action))))
+                                        if (_confirmingOperation == action)
+                                          _InlineConfirmation(
+                                            label: _actionLabel(action),
+                                            onCancel: () => setState(() =>
+                                                _confirmingOperation = null),
+                                            onConfirm: () => _run(check),
+                                          )
+                                        else
+                                          SizedBox(
+                                              width: double.infinity,
+                                              child: FilledButton(
+                                                  onPressed: _pendingOperation ==
+                                                          null
+                                                      ? () => setState(() =>
+                                                          _confirmingOperation =
+                                                              action)
+                                                      : null,
+                                                  child: _pendingOperation ==
+                                                          action
+                                                      ? const SizedBox.square(
+                                                          dimension: 20,
+                                                          child:
+                                                              CircularProgressIndicator(
+                                                                  strokeWidth:
+                                                                      2))
+                                                      : Text(_actionLabel(
+                                                          action))))
                                       ],
                                     ])),
                                 Text(status.toUpperCase(),
@@ -228,6 +218,61 @@ class _TeamPassportPageState extends State<TeamPassportPage> {
                   ]),
             );
           },
+        ),
+        bottomNavigationBar: EventNavigationBar(
+          eventId: widget.eventId,
+          repository: widget.repository,
+          selectedIndex: 3,
+        ),
+      );
+}
+
+class _InlineConfirmation extends StatelessWidget {
+  const _InlineConfirmation({
+    required this.label,
+    required this.onCancel,
+    required this.onConfirm,
+  });
+
+  final String label;
+  final VoidCallback onCancel;
+  final VoidCallback onConfirm;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.coral.withValues(alpha: .09),
+          border: Border.all(color: AppColors.coral.withValues(alpha: .35)),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Confirm $label?',
+                style: const TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            const Text(
+              'Readiness will update automatically.',
+              style: TextStyle(color: AppColors.muted, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onCancel,
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton(
+                  onPressed: onConfirm,
+                  child: Text(label),
+                ),
+              ),
+            ]),
+          ],
         ),
       );
 }

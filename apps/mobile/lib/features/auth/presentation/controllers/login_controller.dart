@@ -31,4 +31,11 @@ class LoginController extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> logout() async {
+    await _repository.logout();
+    session = null;
+    errorMessage = null;
+    notifyListeners();
+  }
 }

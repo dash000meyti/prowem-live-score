@@ -7,6 +7,7 @@ import 'ticket_detail_page.dart';
 import 'team_passport_page.dart';
 import 'incident_detail_page.dart';
 import '../resource_mode.dart';
+import '../widgets/event_navigation_bar.dart';
 
 class ResourceListPage extends StatefulWidget {
   const ResourceListPage(
@@ -74,7 +75,8 @@ class _ResourceListPageState extends State<ResourceListPage> {
                 ResourceMode.readiness => _Readiness(
                     data: snapshot.data! as Map<String, dynamic>,
                     eventId: widget.eventId,
-                    repository: widget.repository),
+                    repository: widget.repository,
+                    onChanged: reload),
                 ResourceMode.live => _Live(
                     data: snapshot.data! as Map<String, dynamic>,
                     eventId: widget.eventId,
@@ -89,15 +91,29 @@ class _ResourceListPageState extends State<ResourceListPage> {
                     onChanged: reload),
               };
             }),
+        bottomNavigationBar: EventNavigationBar(
+          eventId: widget.eventId,
+          repository: widget.repository,
+          selectedIndex: switch (widget.mode) {
+            ResourceMode.live => 2,
+            ResourceMode.teams => 3,
+            ResourceMode.tickets => 4,
+            _ => 1,
+          },
+        ),
       );
 }
 
 class _Readiness extends StatelessWidget {
   const _Readiness(
-      {required this.data, required this.eventId, required this.repository});
+      {required this.data,
+      required this.eventId,
+      required this.repository,
+      required this.onChanged});
   final Map<String, dynamic> data;
   final int eventId;
   final EventWorkspaceRepository repository;
+  final VoidCallback onChanged;
   @override
   Widget build(BuildContext context) =>
       ListView(padding: const EdgeInsets.all(16), children: [
@@ -110,14 +126,15 @@ class _Readiness extends StatelessWidget {
           final item = raw as Map<String, dynamic>;
           return Card(
               child: ListTile(
-                  onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                          builder: (_) => _DimensionPage(
-                              title: item['label'] as String,
-                              eventId: eventId,
-                              repository: repository,
-                              loader: repository.dimension(
-                                  eventId, item['key'] as String)))),
+                  onTap: () async {
+                    await Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => _DimensionPage(
+                            title: item['label'] as String,
+                            dimension: item['key'] as String,
+                            eventId: eventId,
+                            repository: repository)));
+                    onChanged();
+                  },
                   title: Text(item['label'] as String),
                   subtitle: Text(
                       '${item['ready']}/${item['total']} ready · ${item['actions_required']} actions'),
@@ -129,19 +146,36 @@ class _Readiness extends StatelessWidget {
       ]);
 }
 
-class _DimensionPage extends StatelessWidget {
+class _DimensionPage extends StatefulWidget {
   const _DimensionPage(
       {required this.title,
-      required this.loader,
+      required this.dimension,
       required this.eventId,
       required this.repository});
   final String title;
-  final Future<Map<String, dynamic>> loader;
+  final String dimension;
   final int eventId;
   final EventWorkspaceRepository repository;
+
+  @override
+  State<_DimensionPage> createState() => _DimensionPageState();
+}
+
+class _DimensionPageState extends State<_DimensionPage> {
+  late Future<Map<String, dynamic>> loader =
+      widget.repository.dimension(widget.eventId, widget.dimension);
+
+  void reload() => setState(() =>
+      loader = widget.repository.dimension(widget.eventId, widget.dimension));
+
   @override
   Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        title: Text(widget.title),
+        actions: [
+          IconButton(onPressed: reload, icon: const Icon(Icons.refresh))
+        ],
+      ),
       body: FutureBuilder<Map<String, dynamic>>(
           future: loader,
           builder: (context, snapshot) {
@@ -166,13 +200,16 @@ class _DimensionPage extends StatelessWidget {
                       child: ListTile(
                           onTap: teamId == null
                               ? null
-                              : () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute<void>(
-                                      builder: (_) => TeamPassportPage(
-                                          eventId: eventId,
-                                          teamId: teamId,
-                                          repository: repository))),
+                              : () async {
+                                  await Navigator.push(
+                                      context,
+                                      MaterialPageRoute<void>(
+                                          builder: (_) => TeamPassportPage(
+                                              eventId: widget.eventId,
+                                              teamId: teamId,
+                                              repository: widget.repository)));
+                                  reload();
+                                },
                           leading: Icon(Icons.circle,
                               size: 12,
                               color: _statusColor(item['status'] as String)),
@@ -225,6 +262,7 @@ class _List extends StatelessWidget {
                   context,
                   MaterialPageRoute<void>(
                       builder: (_) => TicketDetailPage(
+                          eventId: eventId,
                           ticketId: item['id'] as int,
                           repository: repository)));
             } else if (mode == ResourceMode.teams) {
@@ -241,6 +279,7 @@ class _List extends StatelessWidget {
                   context,
                   MaterialPageRoute<void>(
                       builder: (_) => IncidentDetailPage(
+                          eventId: eventId,
                           incidentId: item['id'] as int,
                           repository: repository)));
             }
@@ -387,6 +426,7 @@ class _LiveState extends State<_Live> {
                             context,
                             MaterialPageRoute<void>(
                                 builder: (_) => IncidentDetailPage(
+                                    eventId: widget.eventId,
                                     incidentId: item['id'] as int,
                                     repository: widget.repository)))
                         : null,

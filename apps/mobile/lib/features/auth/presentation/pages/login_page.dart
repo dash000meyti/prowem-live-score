@@ -10,6 +10,7 @@ import '../../../events/presentation/pages/events_page.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../event_workspace/data/event_workspace_repository.dart';
+import '../../../event_workspace/presentation/widgets/event_navigation_bar.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({required this.controller, super.key});
@@ -46,9 +47,12 @@ class _LoginPageState extends State<LoginPage> {
         baseUrl: AppConfig.fromEnvironment().apiBaseUrl,
         token: widget.controller.session!.token));
     Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
+        settings: const RouteSettings(name: eventsRouteName),
         builder: (_) => EventsPage(
             controller: EventsController(EventsRepositoryImpl(remote)),
-            workspaceRepository: workspace)));
+            workspaceRepository: workspace,
+            user: widget.controller.session!.user,
+            onLogout: widget.controller.logout)));
   }
 
   void _useDemoAccount() {
@@ -69,9 +73,16 @@ class _LoginPageState extends State<LoginPage> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-            Image.asset('assets/images/event-care-stadium.png',
-                fit: BoxFit.fitWidth,
-                alignment: Alignment.topCenter,
+          Image.asset('assets/images/event-care-stadium.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+              cacheWidth: backgroundCacheWidth,
+              filterQuality: FilterQuality.low,
+              color: const Color(0x33000000),
+              colorBlendMode: BlendMode.darken),
+          Image.asset('assets/images/event-care-stadium.png',
+              fit: BoxFit.fitWidth,
+              alignment: Alignment.topCenter,
               cacheWidth: backgroundCacheWidth,
               filterQuality: FilterQuality.low),
           const DecoratedBox(
@@ -81,13 +92,13 @@ class _LoginPageState extends State<LoginPage> {
                       end: Alignment.bottomCenter,
                       colors: [
                 Color(0x16000000),
-                Color(0x59000000),
-                AppColors.background
+                Color(0x4D000000),
+                Color(0x8F05070A)
               ],
                       stops: [
                 0,
-                .45,
-                .82
+                .42,
+                1
               ]))),
           SafeArea(
             child: LayoutBuilder(builder: (context, constraints) {
@@ -102,8 +113,29 @@ class _LoginPageState extends State<LoginPage> {
                   constraints: BoxConstraints(
                       minHeight: constraints.maxHeight - (compact ? 36 : 54)),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const ProwemBrand(compact: true, horizontal: true),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.of(context).maybePop(),
+                            tooltip: 'Back to home',
+                            style: IconButton.styleFrom(
+                              minimumSize: const Size(48, 48),
+                              backgroundColor: const Color(0x9912161E),
+                              side: const BorderSide(color: AppColors.border),
+                            ),
+                            icon: const Icon(Icons.arrow_back_rounded),
+                          ),
+                          const Expanded(
+                            child: Center(
+                              child:
+                                  ProwemBrand(compact: true, horizontal: true),
+                            ),
+                          ),
+                          const SizedBox(width: 48),
+                        ],
+                      ),
                       SizedBox(height: compact ? 24 : 32),
                       _LoginCard(
                           controller: widget.controller,
@@ -226,15 +258,25 @@ class _LoginCard extends StatelessWidget {
                         backgroundColor: AppColors.coral,
                         foregroundColor: Colors.white,
                         shape: const StadiumBorder()),
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(controller.isLoading ? 'Signing in…' : 'Sign In',
+                    child: Stack(
+                      fit: StackFit.expand,
+                      alignment: Alignment.center,
+                      children: [
+                        Center(
+                          child: Text(
+                              controller.isLoading ? 'Signing in…' : 'Sign In',
                               style: const TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.w800)),
-                          const Spacer(),
-                          const Icon(Icons.arrow_forward)
-                        ]),
+                        ),
+                        const Align(
+                          alignment: Alignment.centerRight,
+                          child: Padding(
+                            padding: EdgeInsets.only(right: 2),
+                            child: Icon(Icons.arrow_forward),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),

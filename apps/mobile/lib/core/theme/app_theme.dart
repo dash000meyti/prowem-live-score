@@ -35,7 +35,8 @@ abstract final class AppTheme {
               color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700),
           bodyLarge: TextStyle(color: Colors.white, fontSize: 16, height: 1.45),
           bodyMedium: TextStyle(color: Colors.white, fontSize: 15, height: 1.4),
-          bodySmall: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
+          bodySmall:
+              TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
           labelLarge: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
         ),
         appBarTheme: const AppBarTheme(
@@ -96,7 +97,8 @@ abstract final class AppTheme {
         ),
         dialogTheme: DialogThemeData(
           backgroundColor: const Color(0xFF151A22),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         ),
         dividerTheme: const DividerThemeData(color: AppColors.border),
         inputDecorationTheme: InputDecorationTheme(

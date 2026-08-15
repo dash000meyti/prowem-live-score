@@ -68,6 +68,32 @@ class SecurityAndBehaviorTest extends TestCase
         $this->getJson("/api/v1/tickets/{$ticket->id}")->assertOk()->assertJsonMissingPath('data.internal_note');
     }
 
+    public function test_support_can_prioritize_and_assign_ticket_only_to_support_users(): void
+    {
+        $ticket = SupportTicket::query()->firstOrFail();
+        $agent = User::query()->where('role', UserRole::SupportAgent)->firstOrFail();
+
+        $this->actingAs($agent)
+            ->patchJson("/api/v1/tickets/{$ticket->id}", [
+                'priority' => 'p2',
+                'assignee_id' => $agent->id,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.priority', 'p2')
+            ->assertJsonPath('data.assignee.id', $agent->id);
+
+        $this->assertDatabaseHas('support_tickets', [
+            'id' => $ticket->id,
+            'priority' => 'p2',
+            'assignee_id' => $agent->id,
+        ]);
+
+        $organizer = $this->organizer();
+        $this->patchJson("/api/v1/tickets/{$ticket->id}", [
+            'assignee_id' => $organizer->id,
+        ])->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
+    }
+
     public function test_customer_message_and_resolutions_emit_distinct_realtime_names(): void
     {
         $ticket = SupportTicket::query()->firstOrFail();

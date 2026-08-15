@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/config/app_config.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/controllers/login_controller.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../../auth/presentation/widgets/prowem_brand.dart';
+import '../../../events/data/datasources/events_remote_data_source.dart';
+import '../../../events/data/repositories/events_repository_impl.dart';
+import '../../../events/presentation/controllers/events_controller.dart';
+import '../../../events/presentation/pages/events_page.dart';
+import '../../../event_workspace/data/event_workspace_repository.dart';
+import '../../../event_workspace/presentation/widgets/event_navigation_bar.dart';
 
 class LandingPage extends StatelessWidget {
   const LandingPage({required this.loginController, super.key});
@@ -14,6 +22,103 @@ class LandingPage extends StatelessWidget {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => LoginPage(controller: loginController),
+      ),
+    );
+  }
+
+  void _openDashboard(BuildContext context) {
+    final session = loginController.session;
+    if (session == null) {
+      _openLogin(context);
+      return;
+    }
+    final config = AppConfig.fromEnvironment();
+    final remote = EventsRemoteDataSource(
+        baseUrl: config.apiBaseUrl, token: session.token);
+    final workspace = EventWorkspaceRepository(
+        ApiClient(baseUrl: config.apiBaseUrl, token: session.token));
+    Navigator.of(context).push(MaterialPageRoute<void>(
+        settings: const RouteSettings(name: eventsRouteName),
+        builder: (_) => EventsPage(
+            controller: EventsController(EventsRepositoryImpl(remote)),
+            workspaceRepository: workspace,
+            user: session.user,
+            onLogout: loginController.logout)));
+  }
+
+  void _openEntry(BuildContext context) => loginController.session == null
+      ? _openLogin(context)
+      : _openDashboard(context);
+
+  void _showAccount(BuildContext context) {
+    final user = loginController.session?.user;
+    if (user == null) {
+      _openLogin(context);
+      return;
+    }
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF0D1117),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(99))),
+            const SizedBox(height: 22),
+            _HomeAvatar(name: user.name, size: 54),
+            const SizedBox(height: 12),
+            Text(user.name,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            Text(user.email, style: const TextStyle(color: AppColors.muted)),
+            const SizedBox(height: 5),
+            Text(user.role.replaceAll('_', ' ').toUpperCase(),
+                style: const TextStyle(
+                    color: AppColors.coral,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2)),
+            const SizedBox(height: 20),
+            ListTile(
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _openDashboard(context);
+              },
+              shape: RoundedRectangleBorder(
+                  side: const BorderSide(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(16)),
+              leading: const Icon(Icons.dashboard_outlined),
+              title: const Text('Open My Events',
+                  style: TextStyle(fontWeight: FontWeight.w700)),
+              trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              onTap: () async {
+                Navigator.of(sheetContext).pop();
+                await loginController.logout();
+              },
+              shape: RoundedRectangleBorder(
+                  side: const BorderSide(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(16)),
+              leading:
+                  const Icon(Icons.logout_rounded, color: AppColors.danger),
+              title: const Text('Log out',
+                  style: TextStyle(
+                      color: AppColors.danger, fontWeight: FontWeight.w700)),
+              trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+            ),
+          ]),
+        ),
       ),
     );
   }
@@ -85,13 +190,15 @@ class LandingPage extends StatelessWidget {
               FilledButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  _openLogin(context);
+                  _openEntry(context);
                 },
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.lime,
                   foregroundColor: Colors.black,
                 ),
-                child: const Text('Take Control'),
+                child: Text(loginController.session == null
+                    ? 'Take Control'
+                    : 'Open My Events'),
               ),
             ],
           ),
@@ -101,7 +208,12 @@ class LandingPage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: loginController,
+        builder: (context, _) => _buildPage(context),
+      );
+
+  Widget _buildPage(BuildContext context) {
     final media = MediaQuery.of(context);
     final compact = media.size.height < 720 || media.size.width < 360;
     final backgroundCacheWidth = (media.size.width * media.devicePixelRatio)
@@ -158,16 +270,47 @@ class LandingPage extends StatelessWidget {
                       const Expanded(
                         child: ProwemBrand(compact: true, horizontal: true),
                       ),
-                      TextButton(
-                        onPressed: () => _openLogin(context),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          side: const BorderSide(color: AppColors.border),
-                          shape: const StadiumBorder(),
+                      if (loginController.session case final session?)
+                        InkWell(
+                          onTap: () => _showAccount(context),
+                          borderRadius: BorderRadius.circular(999),
+                          child: Container(
+                            padding: const EdgeInsets.fromLTRB(5, 5, 9, 5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xB312161E),
+                              border: Border.all(color: AppColors.border),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Row(children: [
+                              _HomeAvatar(name: session.user.name, size: 34),
+                              const SizedBox(width: 7),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 68),
+                                child: Text(
+                                  session.user.name.split(' ').first,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                              const Icon(Icons.expand_more_rounded,
+                                  size: 18, color: AppColors.muted),
+                            ]),
+                          ),
+                        )
+                      else
+                        TextButton(
+                          onPressed: () => _openLogin(context),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            side: const BorderSide(color: AppColors.border),
+                            shape: const StadiumBorder(),
+                          ),
+                          child: const Text('Sign in'),
                         ),
-                        child: const Text('Sign in'),
-                      ),
                     ],
                   ),
                   SizedBox(height: compact ? 38 : 54),
@@ -220,7 +363,7 @@ class LandingPage extends StatelessWidget {
                   const _CommandPreview(),
                   const SizedBox(height: 26),
                   FilledButton.icon(
-                    onPressed: () => _openLogin(context),
+                    onPressed: () => _openEntry(context),
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(58),
                       backgroundColor: AppColors.lime,
@@ -232,7 +375,9 @@ class LandingPage extends StatelessWidget {
                     ),
                     iconAlignment: IconAlignment.end,
                     icon: const Icon(Icons.arrow_forward_rounded),
-                    label: const Text('Take Control'),
+                    label: Text(loginController.session == null
+                        ? 'Take Control'
+                        : 'Open My Events'),
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton(
@@ -313,6 +458,35 @@ class LandingPage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _HomeAvatar extends StatelessWidget {
+  const _HomeAvatar({required this.name, required this.size});
+
+  final String name;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    final initials = parts
+        .where((part) => part.isNotEmpty)
+        .take(2)
+        .map((part) => part[0].toUpperCase())
+        .join();
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.coral.withValues(alpha: .1),
+        border: Border.all(color: AppColors.coral.withValues(alpha: .65)),
+      ),
+      child: Text(initials.isEmpty ? '?' : initials,
+          style: TextStyle(fontSize: size * .32, fontWeight: FontWeight.w800)),
     );
   }
 }

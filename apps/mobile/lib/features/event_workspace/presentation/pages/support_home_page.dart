@@ -4,8 +4,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../data/event_workspace_repository.dart';
 import '../resource_mode.dart';
 import 'create_resource_page.dart';
-import 'resource_list_page.dart';
 import 'ticket_detail_page.dart';
+import '../widgets/event_navigation_bar.dart';
 
 class SupportHomePage extends StatefulWidget {
   const SupportHomePage(
@@ -22,9 +22,15 @@ class _SupportHomePageState extends State<SupportHomePage> {
   void reload() =>
       setState(() => loader = widget.repository.supportHome(widget.eventId));
 
-  void ticket(int id) => Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (_) =>
-          TicketDetailPage(ticketId: id, repository: widget.repository)));
+  Future<void> ticket(int id) async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => TicketDetailPage(
+            eventId: widget.eventId,
+            ticketId: id,
+            repository: widget.repository)));
+    if (mounted) reload();
+  }
+
   Future<void> create() async {
     final created = await Navigator.of(context).push<bool>(
         MaterialPageRoute<bool>(
@@ -101,45 +107,11 @@ class _SupportHomePageState extends State<SupportHomePage> {
                             }).toList()),
                       ]));
             }),
-        bottomNavigationBar: SafeArea(
-            top: false,
-            child: Container(
-                height: 66,
-                decoration: const BoxDecoration(
-                    color: Color(0xF205070A),
-                    border: Border(top: BorderSide(color: AppColors.border))),
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _NavIcon(Icons.home_outlined, 'Home',
-                          onTap: () => Navigator.pop(context)),
-                      _NavIcon(Icons.calendar_month_outlined, 'Events',
-                          onTap: () => Navigator.popUntil(
-                              context, (route) => route.isFirst)),
-                      _NavIcon(Icons.sports_soccer, 'Live',
-                          onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute<void>(
-                                  builder: (_) => ResourceListPage(
-                                      title: 'Live control',
-                                      loader: widget.repository
-                                          .live(widget.eventId),
-                                      mode: ResourceMode.live,
-                                      eventId: widget.eventId,
-                                      repository: widget.repository)))),
-                      _NavIcon(Icons.chat_bubble_outline, 'Updates',
-                          onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute<void>(
-                                  builder: (_) => ResourceListPage(
-                                      title: 'Activity',
-                                      loader: widget.repository
-                                          .activity(widget.eventId),
-                                      mode: ResourceMode.activity,
-                                      eventId: widget.eventId,
-                                      repository: widget.repository)))),
-                      const _NavIcon(Icons.headset_mic, 'Support', active: true)
-                    ]))),
+        bottomNavigationBar: EventNavigationBar(
+          eventId: widget.eventId,
+          repository: widget.repository,
+          selectedIndex: 4,
+        ),
       );
 }
 
@@ -402,28 +374,6 @@ class _Empty extends StatelessWidget {
           borderRadius: BorderRadius.circular(15)),
       child: const Text('Nothing to show.',
           style: TextStyle(color: AppColors.muted)));
-}
-
-class _NavIcon extends StatelessWidget {
-  const _NavIcon(this.icon, this.label, {this.active = false, this.onTap});
-  final IconData icon;
-  final String label;
-  final bool active;
-  final VoidCallback? onTap;
-  @override
-  Widget build(BuildContext context) => InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(icon, color: active ? AppColors.coral : AppColors.muted),
-            const SizedBox(height: 3),
-            Text(label,
-                style: TextStyle(
-                    color: active ? AppColors.coral : AppColors.muted,
-                    fontSize: 12))
-          ])));
 }
 
 Color _priority(String priority) => switch (priority) {

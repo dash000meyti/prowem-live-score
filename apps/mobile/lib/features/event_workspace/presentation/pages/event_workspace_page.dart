@@ -8,9 +8,9 @@ import '../../data/event_workspace_repository.dart';
 import '../resource_mode.dart';
 import 'team_passport_page.dart';
 import 'resource_list_page.dart';
-import 'support_home_page.dart';
 import 'incident_detail_page.dart';
 import 'ticket_detail_page.dart';
+import '../widgets/event_navigation_bar.dart';
 
 class EventWorkspacePage extends StatefulWidget {
   const EventWorkspacePage(
@@ -164,30 +164,11 @@ class _EventWorkspacePageState extends State<EventWorkspacePage> {
             );
           },
         ),
-        bottomNavigationBar: _EventBottomNav(
-          onSelect: (index) {
-            if (index == 0) return;
-            if (index == 1) {
-              open(
-                  'Event checklists',
-                  widget.repository.readiness(widget.event.id),
-                  ResourceMode.readiness);
-            }
-            if (index == 2) {
-              open('Matches', widget.repository.live(widget.event.id),
-                  ResourceMode.live);
-            }
-            if (index == 3) {
-              open('Teams', widget.repository.teams(widget.event.id),
-                  ResourceMode.teams);
-            }
-            if (index == 4) {
-              Navigator.of(context).push(MaterialPageRoute<void>(
-                  builder: (_) => SupportHomePage(
-                      eventId: widget.event.id,
-                      repository: widget.repository)));
-            }
-          },
+        bottomNavigationBar: EventNavigationBar(
+          eventId: widget.event.id,
+          repository: widget.repository,
+          selectedIndex: 0,
+          replaceCurrent: false,
         ),
       );
 }
@@ -232,6 +213,7 @@ class _EventHomeBody extends StatelessWidget {
         const SizedBox(height: 18),
         if (status == 'live')
           _LivePriority(
+              eventId: event.id,
               incidents: criticalIncidents,
               operationalIncidents: operationalIncidents,
               tickets: openTickets,
@@ -460,7 +442,8 @@ class _ReadinessHero extends StatelessWidget {
             boxShadow: [
               BoxShadow(color: tone.withValues(alpha: .1), blurRadius: 28)
             ]),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Row(children: [
             Icon(icon, color: tone, size: 24),
             const SizedBox(width: 9),
@@ -471,7 +454,8 @@ class _ReadinessHero extends StatelessWidget {
                         fontSize: 16,
                         fontWeight: FontWeight.w900))),
             Text('${readiness['score']}%',
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+                style:
+                    const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
           ]),
           const SizedBox(height: 14),
           ClipRRect(
@@ -516,7 +500,8 @@ class _ReadinessFact extends StatelessWidget {
   final Color color;
 
   @override
-  Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
+  Widget build(BuildContext context) =>
+      Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(icon, size: 18, color: color),
         const SizedBox(width: 6),
         Text('$value $label',
@@ -526,11 +511,13 @@ class _ReadinessFact extends StatelessWidget {
 
 class _LivePriority extends StatelessWidget {
   const _LivePriority(
-      {required this.incidents,
+      {required this.eventId,
+      required this.incidents,
       required this.operationalIncidents,
       required this.tickets,
       required this.repository,
       required this.onChanged});
+  final int eventId;
   final List<dynamic> incidents;
   final List<dynamic> operationalIncidents;
   final List<dynamic> tickets;
@@ -601,9 +588,11 @@ class _LivePriority extends StatelessWidget {
                       MaterialPageRoute<void>(
                           builder: (_) => linked == null
                               ? IncidentDetailPage(
+                                  eventId: eventId,
                                   incidentId: item['id'] as int,
                                   repository: repository)
                               : TicketDetailPage(
+                                  eventId: eventId,
                                   ticketId: linked['id'] as int,
                                   repository: repository)));
                   onChanged();
@@ -628,6 +617,7 @@ class _LivePriority extends StatelessWidget {
                       context,
                       MaterialPageRoute<void>(
                           builder: (_) => TicketDetailPage(
+                              eventId: eventId,
                               ticketId: item['id'] as int,
                               repository: repository)));
                   onChanged();
@@ -683,76 +673,76 @@ class _AttentionCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-        decoration: BoxDecoration(
-            color: AppColors.surface,
-            border: Border.all(color: AppColors.border),
-            borderRadius: BorderRadius.circular(16)),
-        child: IntrinsicHeight(
-            child: Row(children: [
-          Container(
-              width: 5,
-              decoration: BoxDecoration(
-                  color: tone,
-                  borderRadius: const BorderRadius.horizontal(
-                      left: Radius.circular(16)))),
-          Expanded(
-              child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Row(children: [
-                    Stack(clipBehavior: Clip.none, children: [
-                      CircleAvatar(
-                          radius: 28,
-                          backgroundColor: tone.withValues(alpha: .14),
-                          child: Icon(
-                              _attentionIcon(item['dimension'] as String),
-                              color: tone)),
-                      Positioned(
-                          top: -6,
-                          left: -5,
-                          child: CircleAvatar(
-                              radius: 10,
-                              backgroundColor: tone,
-                              child: Text('$index',
-                                  style: const TextStyle(
-                                      color: Colors.black,
+            decoration: BoxDecoration(
+                color: AppColors.surface,
+                border: Border.all(color: AppColors.border),
+                borderRadius: BorderRadius.circular(16)),
+            child: IntrinsicHeight(
+                child: Row(children: [
+              Container(
+                  width: 5,
+                  decoration: BoxDecoration(
+                      color: tone,
+                      borderRadius: const BorderRadius.horizontal(
+                          left: Radius.circular(16)))),
+              Expanded(
+                  child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(children: [
+                        Stack(clipBehavior: Clip.none, children: [
+                          CircleAvatar(
+                              radius: 28,
+                              backgroundColor: tone.withValues(alpha: .14),
+                              child: Icon(
+                                  _attentionIcon(item['dimension'] as String),
+                                  color: tone)),
+                          Positioned(
+                              top: -6,
+                              left: -5,
+                              child: CircleAvatar(
+                                  radius: 10,
+                                  backgroundColor: tone,
+                                  child: Text('$index',
+                                      style: const TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w800))))
+                        ]),
+                        const SizedBox(width: 13),
+                        Expanded(
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                              Text(critical ? 'CRITICAL' : 'WARNING',
+                                  style: TextStyle(
+                                      color: tone,
                                       fontSize: 12,
-                                      fontWeight: FontWeight.w800))))
-                    ]),
-                    const SizedBox(width: 13),
-                    Expanded(
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                          Text(critical ? 'CRITICAL' : 'WARNING',
+                                      fontWeight: FontWeight.w800)),
+                              const SizedBox(height: 5),
+                              Text(
+                                  item['message'] as String? ??
+                                      _title(item['check_type']),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 4),
+                              Text(
+                                  '${_title(item['dimension'])} requires attention.',
+                                  style: const TextStyle(
+                                      color: AppColors.muted, fontSize: 12))
+                            ])),
+                        const SizedBox(width: 8),
+                        Column(mainAxisSize: MainAxisSize.min, children: [
+                          Text(critical ? 'Resolve' : 'Review',
                               style: TextStyle(
                                   color: tone,
-                                  fontSize: 12,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w800)),
-                          const SizedBox(height: 5),
-                          Text(
-                              item['message'] as String? ??
-                                  _title(item['check_type']),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 4),
-                          Text(
-                              '${_title(item['dimension'])} requires attention.',
-                              style: const TextStyle(
-                                  color: AppColors.muted, fontSize: 12))
-                        ])),
-                    const SizedBox(width: 8),
-                    Column(mainAxisSize: MainAxisSize.min, children: [
-                      Text(critical ? 'Resolve' : 'Review',
-                          style: TextStyle(
-                              color: tone,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800)),
-                      Icon(Icons.chevron_right, color: tone, size: 20),
-                    ])
-                  ])))
-        ]))),
+                          Icon(Icons.chevron_right, color: tone, size: 20),
+                        ])
+                      ])))
+            ]))),
       ),
     );
   }
@@ -877,38 +867,6 @@ class _LoadError extends StatelessWidget {
             const SizedBox(height: 18),
             FilledButton(onPressed: retry, child: const Text('Try again'))
           ])));
-}
-
-class _EventBottomNav extends StatelessWidget {
-  const _EventBottomNav({required this.onSelect});
-  final ValueChanged<int> onSelect;
-  @override
-  Widget build(BuildContext context) => SafeArea(
-      top: false,
-      child: Container(
-          decoration: const BoxDecoration(
-              color: Color(0xF205070A),
-              border: Border(top: BorderSide(color: AppColors.border))),
-          child: NavigationBar(
-              height: 68,
-              selectedIndex: 0,
-              onDestinationSelected: onSelect,
-              backgroundColor: Colors.transparent,
-              indicatorColor: const Color(0x26FF6B3D),
-              destinations: const [
-                NavigationDestination(
-                    icon: Icon(Icons.home_outlined),
-                    selectedIcon: Icon(Icons.home, color: AppColors.coral),
-                    label: 'Home'),
-                NavigationDestination(
-                    icon: Icon(Icons.checklist), label: 'Tasks'),
-                NavigationDestination(
-                    icon: Icon(Icons.sports_soccer), label: 'Matches'),
-                NavigationDestination(
-                    icon: Icon(Icons.groups_outlined), label: 'People'),
-                NavigationDestination(
-                    icon: Icon(Icons.headset_mic_outlined), label: 'Support')
-              ])));
 }
 
 IconData _attentionIcon(String dimension) => switch (dimension) {

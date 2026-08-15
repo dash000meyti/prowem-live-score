@@ -42,6 +42,11 @@ class EventWorkspaceRepository {
           as Map<String, dynamic>;
   Future<Map<String, dynamic>> ticket(int ticketId) async =>
       (await client.get('/tickets/$ticketId'))['data'] as Map<String, dynamic>;
+  Future<Map<String, dynamic>> me() async =>
+      (await client.get('/me'))['data'] as Map<String, dynamic>;
+  Future<Map<String, dynamic>> lookups(int eventId) async =>
+      (await client.get('/events/$eventId/lookups'))['data']
+          as Map<String, dynamic>;
   Future<List<dynamic>> ticketMessages(int ticketId) async =>
       (await client.get('/tickets/$ticketId/messages',
           query: {'per_page': '100'}))['data'] as List<dynamic>;
@@ -56,6 +61,11 @@ class EventWorkspaceRepository {
   Future<void> sendTicketMessage(int ticketId, String body) async {
     await client.post('/tickets/$ticketId/messages', body: {'body': body});
   }
+
+  Future<Map<String, dynamic>> updateTicket(
+          int ticketId, Map<String, dynamic> body) async =>
+      (await client.patch('/tickets/$ticketId', body: body))['data']
+          as Map<String, dynamic>;
 
   Future<Map<String, dynamic>> completeTeamOperation(
           int eventId, int teamId, String operation) async =>

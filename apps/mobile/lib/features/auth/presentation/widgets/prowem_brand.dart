@@ -17,7 +17,8 @@ class ProwemBrand extends StatelessWidget {
       children: [
         Text('PROWEM',
             style: TextStyle(
-                fontSize: horizontal ? (compact ? 24 : 32) : (compact ? 38 : 52),
+                fontSize:
+                    horizontal ? (compact ? 24 : 32) : (compact ? 38 : 52),
                 height: .8,
                 fontWeight: FontWeight.w800,
                 letterSpacing: horizontal ? 1.8 : 3)),
@@ -25,7 +26,8 @@ class ProwemBrand extends StatelessWidget {
         Text('Event Care',
             style: TextStyle(
                 color: AppColors.coral,
-                fontSize: horizontal ? (compact ? 14 : 18) : (compact ? 20 : 27),
+                fontSize:
+                    horizontal ? (compact ? 14 : 18) : (compact ? 20 : 27),
                 letterSpacing: 1)),
       ],
     );

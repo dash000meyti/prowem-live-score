@@ -62,9 +62,7 @@ class EventsRemoteDataSource {
         response.statusCode >= 300 ||
         json['success'] != true) {
       throw AppException(json['message'] as String? ?? 'Unable to load events.',
-          code: response.statusCode == 401
-              ? 'AUTH_REQUIRED'
-              : 'EVENTS_FAILED');
+          code: response.statusCode == 401 ? 'AUTH_REQUIRED' : 'EVENTS_FAILED');
     }
     return json;
   }

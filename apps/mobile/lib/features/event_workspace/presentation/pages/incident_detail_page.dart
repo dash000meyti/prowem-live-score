@@ -3,10 +3,15 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/event_workspace_repository.dart';
 import 'ticket_detail_page.dart';
+import '../widgets/event_navigation_bar.dart';
 
 class IncidentDetailPage extends StatefulWidget {
   const IncidentDetailPage(
-      {required this.incidentId, required this.repository, super.key});
+      {required this.eventId,
+      required this.incidentId,
+      required this.repository,
+      super.key});
+  final int eventId;
   final int incidentId;
   final EventWorkspaceRepository repository;
   @override
@@ -241,6 +246,7 @@ class _IncidentDetailPageState extends State<IncidentDetailPage> {
                                             MaterialPageRoute<void>(
                                                 builder: (_) =>
                                                     TicketDetailPage(
+                                                        eventId: widget.eventId,
                                                         ticketId:
                                                             ticket['id'] as int,
                                                         repository: widget
@@ -274,6 +280,11 @@ class _IncidentDetailPageState extends State<IncidentDetailPage> {
                     ],
                   ]));
             }),
+        bottomNavigationBar: EventNavigationBar(
+          eventId: widget.eventId,
+          repository: widget.repository,
+          selectedIndex: 1,
+        ),
       );
 }
 

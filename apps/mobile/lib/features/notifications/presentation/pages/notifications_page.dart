@@ -23,8 +23,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 final error = snapshot.error;
-                final expired = error is AppException &&
-                    error.code == 'AUTH_REQUIRED';
+                final expired =
+                    error is AppException && error.code == 'AUTH_REQUIRED';
                 return _NotificationsError(
                     message: expired
                         ? 'Your session has expired. Please sign in again.'
@@ -116,7 +116,10 @@ class _NotificationsError extends StatelessWidget {
                 color: sessionExpired ? AppColors.warning : AppColors.coral,
                 size: 42),
             const SizedBox(height: 14),
-            Text(sessionExpired ? 'Sign in required' : 'Unable to load notifications',
+            Text(
+                sessionExpired
+                    ? 'Sign in required'
+                    : 'Unable to load notifications',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
